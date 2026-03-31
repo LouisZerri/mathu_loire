@@ -1,0 +1,60 @@
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
+    <div class="px-5 py-4 border-b border-gray-200">
+        <h2 class="text-sm font-semibold text-gray-900">Synthèse des séances</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3">Date</th>
+                    <th class="px-4 py-3">Spectacle</th>
+                    <th class="px-4 py-3 text-center">Résa</th>
+                    <th class="px-4 py-3 text-center">Places</th>
+                    <th class="px-4 py-3 text-center">Jauge</th>
+                    <th class="px-4 py-3">Remplissage</th>
+                    <th class="px-4 py-3 text-right">Recettes</th>
+                    <th class="px-4 py-3 text-center">Statut</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for rep in repStats %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="font-medium text-gray-900">{{ rep.datetime|format_datetime(pattern='EEE d MMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+                        <div class="text-xs text-gray-500">{{ rep.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-gray-900">{{ rep.showTitle }}</td>
+                    <td class="px-4 py-3 text-center text-gray-900">{{ rep.totalReservations }}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-gray-900">{{ rep.totalPlaces }}</span>
+                        <span class="text-gray-400">/{{ rep.venueCapacity }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center text-gray-500">{{ rep.venueCapacity }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full {{ rep.fillRate >= 90 ? 'bg-red-500' : (rep.fillRate >= 70 ? 'bg-yellow-500' : 'bg-green-500') }}" style="width: {{ rep.fillRate }}%"></div>
+                            </div>
+                            <span class="text-xs text-gray-600">{{ rep.fillRate }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-right font-medium text-gray-900">{{ rep.revenue|number_format(2, ',', ' ') }} €</td>
+                    <td class="px-4 py-3 text-center">
+                        {% if rep.status == 'active' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span>
+                        {% elseif rep.status == 'cancelled' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Annulé</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Hors-ligne</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <a href="{{ path('app_admin_dashboard', { representation: rep.id }) }}" class="text-xs text-gray-500 hover:text-gray-900">Voir &rarr;</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

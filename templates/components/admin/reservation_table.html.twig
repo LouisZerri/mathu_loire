@@ -1,0 +1,86 @@
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-gray-900">Réservations ({{ totalResults }})</h2>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3">N°</th>
+                    <th class="px-4 py-3">Nom</th>
+                    <th class="px-4 py-3">Ville</th>
+                    <th class="px-4 py-3">Spectacle</th>
+                    <th class="px-4 py-3">Date</th>
+                    <th class="px-4 py-3 text-center">Ad.</th>
+                    <th class="px-4 py-3 text-center">Enf.</th>
+                    <th class="px-4 py-3 text-center">Inv.</th>
+                    <th class="px-4 py-3 text-center">PMR</th>
+                    <th class="px-4 py-3">Téléphone</th>
+                    <th class="px-4 py-3">Email</th>
+                    <th class="px-4 py-3 text-center">Statut</th>
+                    <th class="px-4 py-3">Enregistrée le</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for reservation in reservations %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-500">{{ reservation.id }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{{ reservation.spectatorLastName|upper }} {{ reservation.spectatorFirstName }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ reservation.spectatorCity }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ reservation.representation.show.title }}</td>
+                    <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ reservation.representation.datetime|format_datetime(pattern='d MMM yyyy HH:mm', locale='fr', timezone='Europe/Paris') }}</td>
+                    <td class="px-4 py-3 text-center text-gray-900">{{ reservation.nbAdults }}</td>
+                    <td class="px-4 py-3 text-center text-gray-900">{{ reservation.nbChildren }}</td>
+                    <td class="px-4 py-3 text-center text-gray-900">{{ reservation.nbInvitations }}</td>
+                    <td class="px-4 py-3 text-center">
+                        {% if reservation.isPMR %}
+                            <span class="text-blue-600">Oui</span>
+                        {% else %}
+                            <span class="text-gray-400">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ reservation.spectatorPhone }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ reservation.spectatorEmail }}</td>
+                    <td class="px-4 py-3 text-center">
+                        {% if reservation.status == 'validated' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Validée</span>
+                        {% elseif reservation.status == 'pending' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">En attente</span>
+                        {% elseif reservation.status == 'cancelled' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Annulée</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ reservation.createdAt|format_datetime(pattern='d/MM/yyyy HH:mm', locale='fr', timezone='Europe/Paris') }}</td>
+                    <td class="px-4 py-3">
+                        <a href="#" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="14" class="px-4 py-8 text-center text-gray-500">Aucune réservation trouvée.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if totalPages > 1 %}
+    <div class="px-5 py-3 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-gray-500">
+            Page {{ currentPage }} / {{ totalPages }}
+        </div>
+        <div class="flex gap-2">
+            {% if currentPage > 1 %}
+                <a href="{{ path('app_admin_dashboard', { representation: currentRep ? currentRep.id : '', status: currentStatus, page: currentPage - 1 }) }}"
+                   class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Précédent</a>
+            {% endif %}
+            {% if currentPage < totalPages %}
+                <a href="{{ path('app_admin_dashboard', { representation: currentRep ? currentRep.id : '', status: currentStatus, page: currentPage + 1 }) }}"
+                   class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Suivant</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

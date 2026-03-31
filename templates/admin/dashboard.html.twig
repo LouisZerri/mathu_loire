@@ -3,7 +3,26 @@
 {% block title %}Dashboard - Les Mathu'Loire{% endblock %}
 
 {% block body %}
-<h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+<h2 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
 
-<p class="text-gray-600">Bienvenue sur l'espace d'administration.</p>
+{% include 'components/admin/season_stats.html.twig' with { stats: seasonStats, repStats: repStats } %}
+
+{% include 'components/admin/representation_stats.html.twig' with { repStats: repStats } %}
+
+<h3 class="text-lg font-semibold text-gray-900 mb-4">Réservations</h3>
+
+{% include 'components/admin/reservation_filters.html.twig' with {
+    representations: representations,
+    currentRep: currentRep,
+    currentStatus: currentStatus
+} %}
+
+{% include 'components/admin/reservation_table.html.twig' with {
+    reservations: reservations,
+    totalResults: totalResults,
+    currentPage: currentPage,
+    totalPages: totalPages,
+    currentRep: currentRep,
+    currentStatus: currentStatus
+} %}
 {% endblock %}
