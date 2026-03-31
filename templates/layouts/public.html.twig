@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block layout %}
+    {% include 'components/public/header.html.twig' %}
+
+    <main class="flex-1">
+        {% block body %}{% endblock %}
+    </main>
+
+    {% include 'components/public/footer.html.twig' %}
+{% endblock %}

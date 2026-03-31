@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 10mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; }
+
+        .ticket {
+            width: 180mm;
+            height: 70mm;
+            border: 1px solid #999;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 8mm;
+            page-break-inside: avoid;
+        }
+
+        /* Bandeau gauche mauve */
+        .ticket-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30mm;
+            height: 70mm;
+            background: #8b4572;
+            color: #fff;
+            text-align: center;
+            padding-top: 6mm;
+        }
+
+        .ticket-left .logo-text {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .ticket-left .association {
+            font-size: 6px;
+            opacity: 0.7;
+            margin-top: 1mm;
+        }
+
+        .ticket-left .separator {
+            width: 15mm;
+            height: 1px;
+            background: rgba(255,255,255,0.3);
+            margin: 4mm auto;
+        }
+
+        .ticket-left .spectator-name {
+            font-size: 7px;
+            font-weight: 600;
+            padding: 0 2mm;
+            line-height: 1.3;
+        }
+
+        .ticket-left .place-small {
+            font-size: 7px;
+            margin-top: 3mm;
+            opacity: 0.8;
+        }
+
+        .ticket-left .place-small-value {
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* Contenu principal */
+        .ticket-main {
+            margin-left: 30mm;
+            height: 70mm;
+            position: relative;
+        }
+
+        /* Header mauve en haut */
+        .ticket-header {
+            background: #8b4572;
+            color: #fff;
+            padding: 4mm 5mm;
+            height: 18mm;
+            position: relative;
+        }
+
+        .ticket-header .header-left {
+            font-size: 6px;
+            opacity: 0.7;
+        }
+
+        .ticket-header .show-title {
+            font-size: 16px;
+            font-weight: 700;
+            position: absolute;
+            right: 5mm;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: right;
+        }
+
+        /* Corps du billet */
+        .ticket-body {
+            padding: 4mm 5mm;
+            height: 42mm;
+            position: relative;
+        }
+
+        .ticket-body .label {
+            font-size: 6px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .ticket-body .value {
+            font-size: 9px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ticket-body .value-small {
+            font-size: 7px;
+            color: #666;
+        }
+
+        .ticket-body .info-row {
+            margin-bottom: 2.5mm;
+        }
+
+        /* Place en gros à droite */
+        .place-box {
+            position: absolute;
+            right: 5mm;
+            top: 4mm;
+            width: 28mm;
+            height: 28mm;
+            background: #f3e8ee;
+            border: 1px solid #8b4572;
+            border-radius: 2px;
+            text-align: center;
+            padding-top: 6mm;
+        }
+
+        .place-box .place-label {
+            font-size: 7px;
+            color: #8b4572;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .place-box .place-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #8b4572;
+            margin-top: 1mm;
+        }
+
+        /* Footer */
+        .ticket-footer {
+            position: absolute;
+            bottom: 0;
+            left: 30mm;
+            right: 0;
+            height: 10mm;
+            border-top: 1px dashed #ccc;
+            padding: 2mm 5mm;
+            font-size: 6px;
+            color: #999;
+        }
+
+        .ticket-footer .footer-left {
+            float: left;
+        }
+
+        .ticket-footer .footer-right {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    {% set places = [] %}
+    {% if reservation.nbAdults > 0 %}
+        {% for i in 1..reservation.nbAdults %}
+            {% set places = places|merge(['Adulte']) %}
+        {% endfor %}
+    {% endif %}
+    {% if reservation.nbChildren > 0 %}
+        {% for i in 1..reservation.nbChildren %}
+            {% set places = places|merge(['Enfant']) %}
+        {% endfor %}
+    {% endif %}
+    {% if reservation.nbInvitations > 0 %}
+        {% for i in 1..reservation.nbInvitations %}
+            {% set places = places|merge(['Invitation']) %}
+        {% endfor %}
+    {% endif %}
+
+    {% set seatAssignments = reservation.seatAssignments|filter(sa => sa.status == 'assigned') %}
+
+    {% for i in 0..(places|length - 1) %}
+    <div class="ticket">
+        <!-- Bandeau gauche mauve -->
+        <div class="ticket-left">
+            <div class="logo-text">Les Mathu'Loire</div>
+            <div class="association">Association Les Mathu'Loire<br>www.les-mathuloire.com</div>
+            <div class="separator"></div>
+            <div class="spectator-name">{{ reservation.spectatorLastName|upper }}<br>{{ reservation.spectatorFirstName|upper }}</div>
+            <div class="separator"></div>
+            <div class="place-small">PLACE</div>
+            <div class="place-small-value">
+                {% if seatAssignments[i] is defined %}
+                    {{ seatAssignments[i].seat.row }}{{ seatAssignments[i].seat.number }}
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Contenu principal -->
+        <div class="ticket-main">
+            <!-- Header mauve -->
+            <div class="ticket-header">
+                <div class="header-left">Association Les Mathu'Loire - www.les-mathuloire.com</div>
+                <div class="show-title">{{ reservation.representation.show.title }}</div>
+            </div>
+
+            <!-- Corps -->
+            <div class="ticket-body">
+                <div class="info-row">
+                    <div class="label">Date</div>
+                    <div class="value">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }} à {{ reservation.representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</div>
+                </div>
+
+                <div class="info-row">
+                    <div class="label">Salle</div>
+                    <div class="value">ESPACE LÉZIN MOISSERON</div>
+                    <div class="value-small">Salle des Fêtes - St Mathurin</div>
+                </div>
+
+                <div class="info-row">
+                    <div class="label">Nom</div>
+                    <div class="value">{{ reservation.spectatorLastName|upper }} {{ reservation.spectatorFirstName }}</div>
+                </div>
+
+                <div class="info-row">
+                    <div class="label">Type</div>
+                    <div class="value">{{ places[i] }}</div>
+                </div>
+
+                <div class="info-row">
+                    <div class="label">Prix</div>
+                    <div class="value">
+                        {% if places[i] == 'Adulte' %}
+                            {{ reservation.representation.adultPrice|number_format(2, ',', ' ') }} €
+                        {% elseif places[i] == 'Enfant' %}
+                            {{ reservation.representation.childPrice|number_format(2, ',', ' ') }} €
+                        {% else %}
+                            0,00 €
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Place en gros à droite -->
+                <div class="place-box">
+                    <div class="place-label">Place</div>
+                    <div class="place-value">
+                        {% if seatAssignments[i] is defined %}
+                            {{ seatAssignments[i].seat.row }}{{ seatAssignments[i].seat.number }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="ticket-footer">
+            <span class="footer-left">Billet n° {{ reservation.id }}-{{ i + 1 }} {% if reservation.isPMR %}· PMR{% endif %}</span>
+            <span class="footer-right">Réservation n° {{ reservation.id }}</span>
+        </div>
+    </div>
+
+    {% if not loop.last %}<div style="page-break-after: always;"></div>{% endif %}
+    {% endfor %}
+</body>
+</html>

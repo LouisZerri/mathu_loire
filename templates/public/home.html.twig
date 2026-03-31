@@ -1,0 +1,43 @@
+{% extends 'layouts/public.html.twig' %}
+
+{% block title %}Les Mathu'Loire - Billetterie en ligne{% endblock %}
+
+{% block body %}
+<section class="relative h-[500px] overflow-hidden">
+    <img src="{{ asset('images/Slider-2025.jpg') }}"
+         alt=""
+         class="absolute inset-0 w-full h-full object-cover">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative h-full flex flex-col items-center justify-center text-center text-white px-4">
+        <img src="{{ asset('images/matu-loire-logo-couleur-sans-fond2-11.png') }}"
+             alt="Les Mathu'Loire"
+             class="h-16 mb-6">
+        <h1 class="text-4xl font-bold mb-3">Billetterie en ligne</h1>
+        <p class="text-lg text-white/80 mb-8">Réservez vos places pour nos prochaines représentations</p>
+        <a href="{{ path('app_reservation_index') }}"
+           class="bg-white text-gray-900 px-8 py-3 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
+            Voir les représentations
+        </a>
+    </div>
+</section>
+
+{% if representations|length > 0 %}
+<section class="max-w-5xl mx-auto px-4 py-16">
+    <h2 class="text-2xl font-semibold text-gray-900 mb-8">Prochaines représentations</h2>
+
+    <div class="space-y-3">
+        {% for representation in representations|slice(0, 6) %}
+            {% include 'components/public/representation_card.html.twig' with { representation: representation } %}
+        {% endfor %}
+    </div>
+
+    {% if representations|length > 6 %}
+    <div class="text-center mt-8">
+        <a href="{{ path('app_reservation_index') }}" class="text-gray-600 hover:text-gray-900 text-sm font-medium">
+            Voir toutes les représentations &rarr;
+        </a>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

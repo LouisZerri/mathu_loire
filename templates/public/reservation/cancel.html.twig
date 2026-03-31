@@ -1,0 +1,30 @@
+{% extends 'layouts/public.html.twig' %}
+
+{% block title %}Réservation annulée - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<section class="max-w-3xl mx-auto px-4 py-16 text-center">
+    <div class="bg-white border border-gray-200 rounded-lg p-8">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </div>
+
+        <h1 class="text-2xl font-semibold text-gray-900 mb-2">Paiement annulé</h1>
+        <p class="text-gray-500 mb-6">Votre réservation n'a pas été validée. Aucun montant n'a été débité.</p>
+
+        <a href="{{ path('app_reservation_new', { id: reservation.representation.id }) }}"
+           {% if reservation.representation.status != 'active' %}style="display:none"{% endif %}
+           class="inline-block bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+            Réessayer
+        </a>
+
+        <div class="mt-4">
+            <a href="{{ path('app_home') }}" class="text-sm text-gray-500 hover:text-gray-700">
+                Retour à l'accueil
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

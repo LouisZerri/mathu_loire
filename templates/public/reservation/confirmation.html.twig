@@ -1,0 +1,62 @@
+{% extends 'layouts/public.html.twig' %}
+
+{% block title %}Réservation confirmée - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<section class="max-w-3xl mx-auto px-4 py-16 text-center">
+    <div class="bg-white border border-gray-200 rounded-lg p-8">
+        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+
+        <h1 class="text-2xl font-semibold text-gray-900 mb-2">Réservation confirmée</h1>
+        <p class="text-gray-500 mb-8">Réservation n° {{ reservation.id }}</p>
+
+        <div class="text-left bg-gray-50 rounded-lg p-6 space-y-4 text-sm">
+            <div>
+                <span class="text-gray-500">Spectacle</span>
+                <p class="font-medium text-gray-900">{{ reservation.representation.show.title }}</p>
+            </div>
+            <div>
+                <span class="text-gray-500">Date</span>
+                <p class="font-medium text-gray-900">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
+            </div>
+            <div class="flex gap-8">
+                <div>
+                    <span class="text-gray-500">Adultes</span>
+                    <p class="font-medium text-gray-900">{{ reservation.nbAdults }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-500">Enfants</span>
+                    <p class="font-medium text-gray-900">{{ reservation.nbChildren }}</p>
+                </div>
+                {% if reservation.isPMR %}
+                <div>
+                    <span class="text-gray-500">PMR</span>
+                    <p class="font-medium text-gray-900">Oui</p>
+                </div>
+                {% endif %}
+            </div>
+            <div>
+                <span class="text-gray-500">Total</span>
+                <p class="text-lg font-semibold text-gray-900">
+                    {{ (reservation.nbAdults * reservation.representation.adultPrice + reservation.nbChildren * reservation.representation.childPrice)|number_format(2, ',', ' ') }} &euro;
+                </p>
+            </div>
+            <div>
+                <span class="text-gray-500">Réservé par</span>
+                <p class="font-medium text-gray-900">{{ reservation.spectatorFirstName }} {{ reservation.spectatorLastName }}</p>
+                <p class="text-gray-600">{{ reservation.spectatorEmail }}</p>
+            </div>
+        </div>
+
+        <p class="text-sm text-gray-500 mt-6">Un email de confirmation vous sera envoyé à {{ reservation.spectatorEmail }}.</p>
+
+        <a href="{{ path('app_home') }}" class="inline-block mt-6 text-sm text-gray-600 hover:text-gray-900">
+            &larr; Retour à l'accueil
+        </a>
+    </div>
+</section>
+{% endblock %}

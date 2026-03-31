@@ -1,0 +1,12 @@
+<div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+    <h1 class="text-2xl font-semibold text-gray-900">{{ representation.show.title }}</h1>
+    <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-600">
+        <span>{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</span>
+        <span>&middot;</span>
+        <span>{{ representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</span>
+    </div>
+    <div class="flex gap-4 mt-3 text-sm text-gray-500">
+        <span>Adulte : {{ representation.adultPrice }} &euro;</span>
+        <span>Enfant : {{ representation.childPrice }} &euro;</span>
+    </div>
+</div>

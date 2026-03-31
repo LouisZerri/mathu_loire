@@ -1,0 +1,11 @@
+<header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-end">
+    <div class="flex items-center gap-4 text-sm">
+        <span class="text-gray-600">{{ app.user.firstName }} {{ app.user.lastName }}</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+            {{ is_granted('ROLE_ADMIN') ? 'Admin' : 'Billettiste' }}
+        </span>
+        <a href="{{ path('app_logout') }}" class="text-gray-400 hover:text-gray-600 transition-colors">
+            Déconnexion
+        </a>
+    </div>
+</header>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; color: #1f2937; margin: 0; padding: 0; background: #f9fafb; }
+        .container { max-width: 600px; margin: 0 auto; padding: 32px 24px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 32px; }
+        .logo { text-align: center; margin-bottom: 24px; }
+        .logo img { height: 48px; }
+        h1 { font-size: 20px; margin: 0 0 8px; color: #111827; }
+        .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+        .section { margin-bottom: 20px; }
+        .section-title { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .section-value { font-size: 15px; color: #111827; font-weight: 500; }
+        .row { display: flex; gap: 32px; }
+        .total { font-size: 20px; font-weight: 700; color: #111827; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #9ca3af; }
+        .note { background: #f3f4f6; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #4b5563; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <img src="https://www.les-mathuloire.com/wp-content/uploads/2015/09/matu-loire-logo-couleur-sans-fond2-11.png" alt="Les Mathu'Loire">
+            </div>
+
+            <h1>Réservation confirmée</h1>
+            <p class="subtitle">Réservation n° {{ reservation.id }}</p>
+
+            <div class="section">
+                <div class="section-title">Spectacle</div>
+                <div class="section-value">{{ reservation.representation.show.title }}</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Date et heure</div>
+                <div class="section-value">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Lieu</div>
+                <div class="section-value">Salle des fêtes - Saint-Mathurin-sur-Loire</div>
+            </div>
+
+            <table style="width: 100%; margin-bottom: 8px;">
+                {% if reservation.nbAdults > 0 %}
+                <tr>
+                    <td style="font-size: 14px; color: #4b5563; padding: 4px 0;">{{ reservation.nbAdults }} adulte{{ reservation.nbAdults > 1 ? 's' : '' }}</td>
+                    <td style="font-size: 14px; color: #111827; font-weight: 500; text-align: right;">{{ (reservation.nbAdults * reservation.representation.adultPrice)|number_format(2, ',', ' ') }} €</td>
+                </tr>
+                {% endif %}
+                {% if reservation.nbChildren > 0 %}
+                <tr>
+                    <td style="font-size: 14px; color: #4b5563; padding: 4px 0;">{{ reservation.nbChildren }} enfant{{ reservation.nbChildren > 1 ? 's' : '' }}</td>
+                    <td style="font-size: 14px; color: #111827; font-weight: 500; text-align: right;">{{ (reservation.nbChildren * reservation.representation.childPrice)|number_format(2, ',', ' ') }} €</td>
+                </tr>
+                {% endif %}
+                {% if reservation.isPMR %}
+                <tr>
+                    <td colspan="2" style="font-size: 13px; color: #6b7280; padding: 4px 0;">PMR : Oui</td>
+                </tr>
+                {% endif %}
+            </table>
+
+            <div class="total">Total : {{ total|number_format(2, ',', ' ') }} €</div>
+
+            <div class="section" style="margin-top: 20px;">
+                <div class="section-title">Réservé par</div>
+                <div class="section-value">{{ reservation.spectatorFirstName }} {{ reservation.spectatorLastName }}</div>
+                <div style="font-size: 13px; color: #6b7280;">{{ reservation.spectatorEmail }} &middot; {{ reservation.spectatorPhone }}</div>
+            </div>
+
+            <div class="note">
+                Votre billet est joint à cet email en pièce jointe (PDF). Merci de le présenter à l'entrée (imprimé ou sur smartphone).
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Cie Les Mathu'Loire - 100 Levée du Roi René - 49250 Saint-Mathurin-sur-Loire</p>
+            <p>contact@les-mathuloire.com - www.les-mathuloire.com</p>
+        </div>
+    </div>
+</body>
+</html>

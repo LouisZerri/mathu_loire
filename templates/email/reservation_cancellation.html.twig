@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; color: #1f2937; margin: 0; padding: 0; background: #f9fafb; }
+        .container { max-width: 600px; margin: 0 auto; padding: 32px 24px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 32px; }
+        .logo { text-align: center; margin-bottom: 24px; }
+        .logo img { height: 48px; }
+        h1 { font-size: 20px; margin: 0 0 8px; color: #111827; }
+        .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+        .section { margin-bottom: 20px; }
+        .section-title { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .section-value { font-size: 15px; color: #111827; font-weight: 500; }
+        .refund-notice { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #065f46; margin-top: 20px; }
+        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <img src="https://www.les-mathuloire.com/wp-content/uploads/2015/09/matu-loire-logo-couleur-sans-fond2-11.png" alt="Les Mathu'Loire">
+            </div>
+
+            <h1>Réservation annulée</h1>
+            <p class="subtitle">Réservation n° {{ reservation.id }}</p>
+
+            <div class="section">
+                <div class="section-title">Spectacle</div>
+                <div class="section-value">{{ reservation.representation.show.title }}</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Date et heure</div>
+                <div class="section-value">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Réservé par</div>
+                <div class="section-value">{{ reservation.spectatorFirstName }} {{ reservation.spectatorLastName }}</div>
+            </div>
+
+            <div class="refund-notice">
+                Votre remboursement de <strong>{{ total|number_format(2, ',', ' ') }} €</strong> a été initié. Il apparaîtra sur votre relevé bancaire sous 5 à 10 jours ouvrés.
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Cie Les Mathu'Loire - 100 Levée du Roi René - 49250 Saint-Mathurin-sur-Loire</p>
+            <p>contact@les-mathuloire.com - www.les-mathuloire.com</p>
+        </div>
+    </div>
+</body>
+</html>

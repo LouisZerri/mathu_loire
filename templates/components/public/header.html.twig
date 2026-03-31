@@ -1,0 +1,14 @@
+<header class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <a href="{{ path('app_home') }}" class="flex items-center gap-3">
+            <img src="{{ asset('images/matu-loire-logo-couleur-sans-fond2-11.png') }}"
+                 alt="Les Mathu'Loire"
+                 class="h-12">
+        </a>
+
+        <nav class="hidden md:flex items-center gap-8">
+            <a href="{{ path('app_home') }}" class="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">Accueil</a>
+            <a href="{{ path('app_reservation_index') }}" class="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">Billetterie</a>
+        </nav>
+    </div>
+</header>

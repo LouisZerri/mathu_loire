@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@source not "../../public";
+
+button, [type="submit"], a[href] {
+    cursor: pointer;
+}

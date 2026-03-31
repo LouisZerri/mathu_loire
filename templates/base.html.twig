@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Les Mathu'Loire - Billetterie{% endblock %}</title>
+        <link rel="icon" href="{{ asset('images/matu-loire-logo-couleur-sans-fond2-11.png') }}" type="image/png">
+        {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
+        {% endblock %}
+        {% block javascripts %}
+            {{ encore_entry_script_tags('app') }}
+        {% endblock %}
+    </head>
+    <body class="min-h-screen flex flex-col bg-gray-50 text-gray-800">
+        {% block layout %}{% endblock %}
+    </body>
+</html>
