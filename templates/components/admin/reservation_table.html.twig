@@ -54,7 +54,7 @@
                     </td>
                     <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ reservation.createdAt|format_datetime(pattern='d/MM/yyyy HH:mm', locale='fr', timezone='Europe/Paris') }}</td>
                     <td class="px-4 py-3">
-                        <a href="#" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
+                        <a href="{{ path('app_admin_reservation_edit', { id: reservation.id }) }}" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
                     </td>
                 </tr>
                 {% else %}
@@ -73,11 +73,11 @@
         </div>
         <div class="flex gap-2">
             {% if currentPage > 1 %}
-                <a href="{{ path('app_admin_dashboard', { representation: currentRep ? currentRep.id : '', status: currentStatus, page: currentPage - 1 }) }}"
+                <a href="{{ path('app_admin_reservation_index', { representation: currentRep ? currentRep.id : '', status: currentStatus, page: currentPage - 1 }) }}"
                    class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Précédent</a>
             {% endif %}
             {% if currentPage < totalPages %}
-                <a href="{{ path('app_admin_dashboard', { representation: currentRep ? currentRep.id : '', status: currentStatus, page: currentPage + 1 }) }}"
+                <a href="{{ path('app_admin_reservation_index', { representation: currentRep ? currentRep.id : '', status: currentStatus, page: currentPage + 1 }) }}"
                    class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Suivant</a>
             {% endif %}
         </div>

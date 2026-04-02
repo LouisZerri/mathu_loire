@@ -1,0 +1,108 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Représentations - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">Représentations</h2>
+    <a href="{{ path('app_admin_representation_new') }}" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+        Nouvelle représentation
+    </a>
+</div>
+
+{% for flash in app.flashes('success') %}
+    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm mb-6">{{ flash }}</div>
+{% endfor %}
+
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
+    <div class="px-5 py-4 border-b border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-900">Représentations actives</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3">Spectacle</th>
+                    <th class="px-4 py-3">Date</th>
+                    <th class="px-4 py-3 text-center">Statut</th>
+                    <th class="px-4 py-3 text-center">Jauge</th>
+                    <th class="px-4 py-3 text-center">Résa max</th>
+                    <th class="px-4 py-3 text-right">Adulte</th>
+                    <th class="px-4 py-3 text-right">Enfant</th>
+                    <th class="px-4 py-3 text-right">Groupe</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for rep in activeRepresentations %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium text-gray-900">{{ rep.show.title }}</td>
+                    <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ rep.datetime|format_datetime(pattern='EEE d MMM yyyy HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</td>
+                    <td class="px-4 py-3 text-center">
+                        {% if rep.status == 'active' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Hors-ligne</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-center text-gray-900">{{ rep.venueCapacity }}</td>
+                    <td class="px-4 py-3 text-center text-gray-900">{{ rep.maxOnlineReservations }}</td>
+                    <td class="px-4 py-3 text-right text-gray-900">{{ rep.adultPrice|number_format(2, ',', ' ') }} €</td>
+                    <td class="px-4 py-3 text-right text-gray-900">{{ rep.childPrice|number_format(2, ',', ' ') }} €</td>
+                    <td class="px-4 py-3 text-right text-gray-500">{{ rep.groupPrice ? rep.groupPrice|number_format(2, ',', ' ') ~ ' €' : '-' }}</td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex items-center justify-end gap-3">
+                            <a href="{{ path('app_admin_representation_edit', { id: rep.id }) }}" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
+                            <form method="post" action="{{ path('app_admin_representation_cancel', { id: rep.id }) }}" onsubmit="return confirm('Annuler cette représentation ?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('cancel_rep_' ~ rep.id) }}">
+                                <button type="submit" class="text-xs text-red-500 hover:text-red-700">Annuler</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="px-4 py-8 text-center text-gray-500">Aucune représentation active.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if cancelledRepresentations|length > 0 %}
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-900">Représentations annulées</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3">Spectacle</th>
+                    <th class="px-4 py-3">Date</th>
+                    <th class="px-4 py-3 text-center">Jauge</th>
+                    <th class="px-4 py-3 text-right">Adulte</th>
+                    <th class="px-4 py-3 text-right">Enfant</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for rep in cancelledRepresentations %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-500">{{ rep.show.title }}</td>
+                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ rep.datetime|format_datetime(pattern='EEE d MMM yyyy HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</td>
+                    <td class="px-4 py-3 text-center text-gray-500">{{ rep.venueCapacity }}</td>
+                    <td class="px-4 py-3 text-right text-gray-500">{{ rep.adultPrice|number_format(2, ',', ' ') }} €</td>
+                    <td class="px-4 py-3 text-right text-gray-500">{{ rep.childPrice|number_format(2, ',', ' ') }} €</td>
+                    <td class="px-4 py-3 text-right">
+                        <a href="{{ path('app_admin_representation_edit', { id: rep.id }) }}" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

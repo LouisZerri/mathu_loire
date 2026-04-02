@@ -1,0 +1,83 @@
+<div class="bg-white border border-gray-200 rounded-lg p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-4">Résumé</h3>
+
+    <div class="space-y-3 text-sm">
+        <div class="flex justify-between">
+            <span class="text-gray-500">Total places</span>
+            <span class="font-medium text-gray-900">{{ reservation.nbAdults + reservation.nbChildren + reservation.nbInvitations }}</span>
+        </div>
+        <div class="flex justify-between">
+            <span class="text-gray-500">Adultes</span>
+            <span class="text-gray-900">{{ reservation.nbAdults }} x {{ reservation.representation.adultPrice|number_format(2, ',', ' ') }} €</span>
+        </div>
+        <div class="flex justify-between">
+            <span class="text-gray-500">Enfants</span>
+            <span class="text-gray-900">{{ reservation.nbChildren }} x {{ reservation.representation.childPrice|number_format(2, ',', ' ') }} €</span>
+        </div>
+        {% if reservation.nbInvitations > 0 %}
+        <div class="flex justify-between">
+            <span class="text-gray-500">Invitations</span>
+            <span class="text-gray-900">{{ reservation.nbInvitations }}</span>
+        </div>
+        {% endif %}
+        <div class="flex justify-between border-t border-gray-100 pt-3">
+            <span class="font-semibold text-gray-900">Total</span>
+            <span class="font-bold text-gray-900 text-lg">{{ total|number_format(2, ',', ' ') }} €</span>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-lg p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-4">Historique</h3>
+
+    <div class="space-y-2 text-sm">
+        <div>
+            <span class="text-gray-500">Enregistrée le</span>
+            <p class="text-gray-900">{{ reservation.createdAt|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
+        </div>
+        {% if reservation.updatedAt %}
+        <div>
+            <span class="text-gray-500">Dernière modification</span>
+            <p class="text-gray-900">{{ reservation.updatedAt|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
+        </div>
+        {% endif %}
+        {% if reservation.createdBy %}
+        <div>
+            <span class="text-gray-500">Créée par</span>
+            <p class="text-gray-900">{{ reservation.createdBy.firstName }} {{ reservation.createdBy.lastName }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if reservation.payments|length > 0 %}
+<div class="bg-white border border-gray-200 rounded-lg p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-4">Paiements</h3>
+
+    <div class="space-y-2 text-sm">
+        {% for payment in reservation.payments %}
+        <div class="flex justify-between items-center">
+            <div>
+                <span class="text-gray-900">{{ payment.amount|number_format(2, ',', ' ') }} €</span>
+                <span class="text-gray-400">·</span>
+                <span class="text-gray-500">{{ payment.method }}</span>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ payment.type == 'payment' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                {{ payment.type == 'payment' ? 'Payé' : 'Remboursé' }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="bg-white border border-gray-200 rounded-lg p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-4">Actions</h3>
+
+    <form method="post" action="{{ path('app_admin_reservation_resend_email', { id: reservation.id }) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('resend_email_' ~ reservation.id) }}">
+        <button type="submit" class="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+            Renvoyer l'email de confirmation
+        </button>
+    </form>
+</div>

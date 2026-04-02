@@ -1,4 +1,4 @@
-<form method="get" action="{{ path('app_admin_dashboard') }}" class="flex flex-wrap items-end gap-4 mb-4">
+<form method="get" action="{{ path('app_admin_reservation_index') }}" class="flex flex-wrap items-end gap-4 mb-4">
     <div>
         <label class="block text-xs text-gray-500 mb-1">Représentation</label>
         <select name="representation" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
@@ -27,7 +27,7 @@
         </button>
 
         {% if currentRep or currentStatus %}
-            <a href="{{ path('app_admin_dashboard') }}" class="text-sm text-gray-500 hover:text-gray-700">Réinitialiser</a>
+            <a href="{{ path('app_admin_reservation_index') }}" class="text-sm text-gray-500 hover:text-gray-700">Réinitialiser</a>
         {% endif %}
     </div>
 </form>

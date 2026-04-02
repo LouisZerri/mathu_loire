@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: RepresentationRepository::class)]
 class Representation
@@ -17,21 +18,33 @@ class Representation
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Assert\NotNull(message: 'La date est obligatoire.')]
+    #[Assert\GreaterThan('today', message: 'La date doit être dans le futur.')]
     private ?\DateTime $datetime = null;
 
     #[ORM\Column(length: 20)]
+    #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
+    #[Assert\Choice(choices: ['active', 'cancelled', 'offline'], message: 'Statut invalide.')]
     private ?string $status = null;
 
     #[ORM\Column]
+    #[Assert\NotNull(message: 'Le nombre de réservations max est obligatoire.')]
+    #[Assert\Range(min: 1, max: 500, notInRangeMessage: 'Doit être entre {{ min }} et {{ max }}.')]
     private ?int $maxOnlineReservations = null;
 
     #[ORM\Column]
+    #[Assert\NotNull(message: 'La jauge est obligatoire.')]
+    #[Assert\Range(min: 10, max: 500, notInRangeMessage: 'Doit être entre {{ min }} et {{ max }}.')]
     private ?int $venueCapacity = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotNull(message: 'Le tarif adulte est obligatoire.')]
+    #[Assert\GreaterThan(value: 0, message: 'Le tarif doit être supérieur à 0.')]
     private ?string $adultPrice = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotNull(message: 'Le tarif enfant est obligatoire.')]
+    #[Assert\GreaterThan(value: 0, message: 'Le tarif doit être supérieur à 0.')]
     private ?string $childPrice = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]

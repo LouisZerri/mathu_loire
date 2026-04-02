@@ -1,0 +1,56 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Spectacles - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">Spectacles</h2>
+    <a href="{{ path('app_admin_show_new') }}" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+        Nouveau spectacle
+    </a>
+</div>
+
+{% for flash in app.flashes('success') %}
+    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm mb-6">{{ flash }}</div>
+{% endfor %}
+{% for flash in app.flashes('error') %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6">{{ flash }}</div>
+{% endfor %}
+
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                <th class="px-4 py-3">Titre</th>
+                <th class="px-4 py-3">Description</th>
+                <th class="px-4 py-3 text-center">Représentations</th>
+                <th class="px-4 py-3"></th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for show in shows %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium text-gray-900">{{ show.title }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ show.description|default('-')|u.truncate(80, '...') }}</td>
+                <td class="px-4 py-3 text-center text-gray-900">{{ show.representations|length }}</td>
+                <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-3">
+                        <a href="{{ path('app_admin_show_edit', { id: show.id }) }}" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
+                        {% if show.representations|length == 0 %}
+                        <form method="post" action="{{ path('app_admin_show_delete', { id: show.id }) }}" onsubmit="return confirm('Supprimer ce spectacle ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_show_' ~ show.id) }}">
+                            <button type="submit" class="text-xs text-red-500 hover:text-red-700">Supprimer</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="px-4 py-8 text-center text-gray-500">Aucun spectacle.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

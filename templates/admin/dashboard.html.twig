@@ -7,22 +7,131 @@
 
 {% include 'components/admin/season_stats.html.twig' with { stats: seasonStats, repStats: repStats } %}
 
+<div class="grid lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Remplissage par séance</h3>
+        <div style="height: 250px;">
+            <canvas id="chartFillRate"></canvas>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Recettes par séance</h3>
+        <div style="height: 250px;">
+            <canvas id="chartRevenue"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Répartition des spectateurs</h3>
+        <div style="height: 250px;">
+            <canvas id="chartSpectators"></canvas>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">Places par séance</h3>
+        <div style="height: 250px;">
+            <canvas id="chartPlaces"></canvas>
+        </div>
+    </div>
+</div>
+
 {% include 'components/admin/representation_stats.html.twig' with { repStats: repStats } %}
 
-<h3 class="text-lg font-semibold text-gray-900 mb-4">Réservations</h3>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const repLabels = [
+        {% for rep in repStats %}
+            "{{ rep.showTitle }} {{ rep.datetime|format_datetime(pattern='d/MM', locale='fr', timezone='Europe/Paris') }}"{{ not loop.last ? ',' : '' }}
+        {% endfor %}
+    ];
+    const fillRates = [{% for rep in repStats %}{{ rep.fillRate }}{{ not loop.last ? ',' : '' }}{% endfor %}];
+    const revenues = [{% for rep in repStats %}{{ rep.revenue }}{{ not loop.last ? ',' : '' }}{% endfor %}];
+    const places = [{% for rep in repStats %}{{ rep.totalPlaces }}{{ not loop.last ? ',' : '' }}{% endfor %}];
+    const capacities = [{% for rep in repStats %}{{ rep.venueCapacity }}{{ not loop.last ? ',' : '' }}{% endfor %}];
 
-{% include 'components/admin/reservation_filters.html.twig' with {
-    representations: representations,
-    currentRep: currentRep,
-    currentStatus: currentStatus
-} %}
+    const grayLight = 'rgba(156, 163, 175, 0.2)';
 
-{% include 'components/admin/reservation_table.html.twig' with {
-    reservations: reservations,
-    totalResults: totalResults,
-    currentPage: currentPage,
-    totalPages: totalPages,
-    currentRep: currentRep,
-    currentStatus: currentStatus
-} %}
+    const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: { grid: { color: grayLight }, ticks: { font: { size: 10 } } },
+        },
+    };
+
+    new Chart(document.getElementById('chartFillRate'), {
+        type: 'bar',
+        data: {
+            labels: repLabels,
+            datasets: [{
+                data: fillRates,
+                backgroundColor: fillRates.map(function(r) { return r >= 90 ? 'rgba(239,68,68,0.8)' : r >= 70 ? 'rgba(234,179,8,0.8)' : 'rgba(34,197,94,0.8)'; }),
+                borderRadius: 4,
+            }],
+        },
+        options: Object.assign({}, defaultOptions, {
+            scales: Object.assign({}, defaultOptions.scales, {
+                y: Object.assign({}, defaultOptions.scales.y, { max: 100, ticks: { font: { size: 10 }, callback: function(v) { return v + '%'; } } })
+            })
+        }),
+    });
+
+    new Chart(document.getElementById('chartRevenue'), {
+        type: 'bar',
+        data: {
+            labels: repLabels,
+            datasets: [{
+                data: revenues,
+                backgroundColor: 'rgb(17,24,39)',
+                borderRadius: 4,
+            }],
+        },
+        options: Object.assign({}, defaultOptions, {
+            scales: Object.assign({}, defaultOptions.scales, {
+                y: Object.assign({}, defaultOptions.scales.y, { ticks: { font: { size: 10 }, callback: function(v) { return v + ' €'; } } })
+            })
+        }),
+    });
+
+    new Chart(document.getElementById('chartSpectators'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Adultes', 'Enfants', 'Invitations'],
+            datasets: [{
+                data: [{{ seasonStats.totalAdults }}, {{ seasonStats.totalChildren }}, {{ seasonStats.totalInvitations }}],
+                backgroundColor: ['rgb(17,24,39)', 'rgb(59,130,246)', 'rgb(249,115,22)'],
+                borderWidth: 0,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16 } },
+            },
+        },
+    });
+
+    new Chart(document.getElementById('chartPlaces'), {
+        type: 'bar',
+        data: {
+            labels: repLabels,
+            datasets: [
+                { label: 'Réservées', data: places, backgroundColor: 'rgb(34,197,94)', borderRadius: 4 },
+                { label: 'Capacité', data: capacities, backgroundColor: grayLight, borderRadius: 4 },
+            ],
+        },
+        options: Object.assign({}, defaultOptions, {
+            plugins: { legend: { display: true, position: 'top', labels: { font: { size: 11 }, boxWidth: 12, padding: 16 } } },
+        }),
+    });
+})();
+</script>
 {% endblock %}

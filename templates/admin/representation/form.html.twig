@@ -1,0 +1,76 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}{{ is_new ? 'Nouvelle représentation' : 'Éditer représentation' }} - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<a href="{{ path('app_admin_representation_index') }}" class="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">&larr; Retour aux représentations</a>
+
+<h2 class="text-2xl font-bold text-gray-900 mb-6">{{ is_new ? 'Nouvelle représentation' : 'Éditer la représentation' }}</h2>
+
+<div class="max-w-2xl">
+    {{ form_start(form, { attr: { class: 'space-y-6' } }) }}
+
+    <fieldset class="bg-white border border-gray-200 rounded-lg p-6">
+        <legend class="text-sm font-semibold text-gray-900 px-1">Spectacle & Date</legend>
+        <div class="grid sm:grid-cols-3 gap-4 mt-3">
+            <div>
+                {{ form_label(form.show, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.show, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+                {{ form_errors(form.show) }}
+            </div>
+            <div>
+                {{ form_label(form.datetime, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.datetime, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+                {{ form_errors(form.datetime) }}
+            </div>
+            <div>
+                {{ form_label(form.status, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.status, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+                {{ form_errors(form.status) }}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="bg-white border border-gray-200 rounded-lg p-6">
+        <legend class="text-sm font-semibold text-gray-900 px-1">Capacité</legend>
+        <div class="grid sm:grid-cols-2 gap-4 mt-3">
+            <div>
+                {{ form_label(form.venueCapacity, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.venueCapacity, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+                {{ form_errors(form.venueCapacity) }}
+            </div>
+            <div>
+                {{ form_label(form.maxOnlineReservations, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.maxOnlineReservations, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+                {{ form_errors(form.maxOnlineReservations) }}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="bg-white border border-gray-200 rounded-lg p-6">
+        <legend class="text-sm font-semibold text-gray-900 px-1">Tarifs</legend>
+        <div class="grid sm:grid-cols-3 gap-4 mt-3">
+            <div>
+                {{ form_label(form.adultPrice, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.adultPrice, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+                {{ form_errors(form.adultPrice) }}
+            </div>
+            <div>
+                {{ form_label(form.childPrice, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.childPrice, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+                {{ form_errors(form.childPrice) }}
+            </div>
+            <div>
+                {{ form_label(form.groupPrice, null, { label_attr: { class: 'block text-sm font-medium text-gray-700 mb-1' } }) }}
+                {{ form_widget(form.groupPrice, { attr: { class: 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900' } }) }}
+            </div>
+        </div>
+    </fieldset>
+
+    <button type="submit" class="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+        {{ is_new ? 'Créer la représentation' : 'Enregistrer' }}
+    </button>
+
+    {{ form_end(form) }}
+</div>
+{% endblock %}
