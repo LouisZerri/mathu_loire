@@ -56,6 +56,13 @@ class ReservationType extends AbstractType
                 'label' => 'Commentaire',
                 'required' => false,
                 'attr' => ['rows' => 3, 'placeholder' => 'Informations complémentaires...'],
+            ])
+            ->add('rgpdConsent', CheckboxType::class, [
+                'label' => 'J\'accepte que mes données personnelles soient traitées pour la gestion de ma réservation.',
+                'mapped' => false,
+                'constraints' => [
+                    new Assert\IsTrue(message: 'Vous devez accepter la politique de confidentialité.'),
+                ],
             ]);
     }
 

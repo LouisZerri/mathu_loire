@@ -17,6 +17,17 @@
         {% include 'components/public/reservation_places.html.twig' with { form: form, representation: representation } %}
         {% include 'components/public/reservation_contact.html.twig' with { form: form } %}
 
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
+            <label class="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
+                {{ form_widget(form.rgpdConsent, { attr: { class: 'mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900' } }) }}
+                <span>
+                    J'accepte que mes données personnelles soient traitées pour la gestion de ma réservation conformément à la
+                    <a href="{{ path('app_privacy') }}" target="_blank" class="underline hover:text-gray-900">politique de confidentialité</a>.
+                </span>
+            </label>
+            {{ form_errors(form.rgpdConsent) }}
+        </div>
+
         <div class="pt-4">
             <button type="submit"
                     class="w-full bg-gray-900 text-white py-3 px-6 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-colors">

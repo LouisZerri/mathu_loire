@@ -5,7 +5,13 @@
                  alt="Les Mathu'Loire"
                  class="h-8">
             <span>100 Levée du Roi René - 49250 Saint-Mathurin-sur-Loire</span>
-            <span>&copy; {{ 'now'|date('Y') }} Les Mathu'Loire</span>
+            <span class="flex items-center gap-3">
+                <a href="{{ path('app_legal') }}" class="hover:text-gray-700">Mentions légales</a>
+                <span>·</span>
+                <a href="{{ path('app_privacy') }}" class="hover:text-gray-700">Confidentialité</a>
+                <span>·</span>
+                &copy; {{ 'now'|date('Y') }} Les Mathu'Loire
+            </span>
         </div>
     </div>
 </footer>
