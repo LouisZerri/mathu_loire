@@ -117,12 +117,51 @@ class HelloAssoPaymentHandler
         $payment->setMethod('helloasso');
         $payment->setAmount((string) ($paymentData['amount'] / 100));
         $payment->setType('payment');
-        $payment->setTransactionId((string) $data['order']['id']);
+        $payment->setTransactionId((string) $paymentData['id']);
         $payment->setCreatedAt(new \DateTimeImmutable());
 
         $this->em->persist($payment);
 
         return true;
+    }
+
+    public function refund(Reservation $reservation): bool
+    {
+        $token = $this->authenticate();
+
+        $payments = $reservation->getPayments();
+
+        foreach ($payments as $payment) {
+            if ($payment->getMethod() !== 'helloasso' || $payment->getType() !== 'payment' || !$payment->getTransactionId()) {
+                continue;
+            }
+
+            $response = $this->httpClient->request('POST', $this->getApiUrl() . '/payments/' . $payment->getTransactionId() . '/refund', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                ],
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $refundPayment = new Payment();
+                $refundPayment->setReservation($reservation);
+                $refundPayment->setMethod('helloasso');
+                $refundPayment->setAmount('-' . $payment->getAmount());
+                $refundPayment->setType('refund');
+                $refundPayment->setTransactionId($payment->getTransactionId() . '_refund');
+                $refundPayment->setCreatedAt(new \DateTimeImmutable());
+
+                $this->em->persist($refundPayment);
+
+                return true;
+            }
+
+            $this->logger->error('HelloAsso refund failed: {body}', [
+                'body' => $response->getContent(false),
+            ]);
+        }
+
+        return false;
     }
 
     public function handleNotification(array $data): ?Reservation

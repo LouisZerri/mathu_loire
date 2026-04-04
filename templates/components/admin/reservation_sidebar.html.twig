@@ -86,5 +86,14 @@
            class="block w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
             Imprimer les billets (80mm)
         </a>
+
+        {% if reservation.status == 'validated' and reservation.payments|length > 0 %}
+        <form method="post" action="{{ path('app_admin_reservation_refund', { id: reservation.id }) }}" onsubmit="return confirm('Annuler cette réservation et rembourser le spectateur ? Cette action est irréversible.')">
+            <input type="hidden" name="_token" value="{{ csrf_token('refund_' ~ reservation.id) }}">
+            <button type="submit" class="w-full px-4 py-2 bg-red-50 border border-red-200 text-sm rounded-lg text-red-700 hover:bg-red-100 transition-colors">
+                Annuler et rembourser
+            </button>
+        </form>
+        {% endif %}
     </div>
 </div>

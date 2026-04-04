@@ -6,6 +6,7 @@ use App\Entity\Reservation;
 use App\Form\AdminReservationType;
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
+use App\Service\HelloAssoPaymentHandler;
 use App\Service\ReservationMailer;
 use App\Service\ReservationService;
 use App\Service\TicketThermalPdfGenerator;
@@ -86,6 +87,29 @@ class ReservationController extends AbstractController
         if ($this->isCsrfTokenValid('resend_email_' . $reservation->getId(), $request->request->get('_token'))) {
             $mailer->sendConfirmation($reservation);
             $this->addFlash('success', 'Email de confirmation renvoyé à ' . $reservation->getSpectatorEmail() . '.');
+        }
+
+        return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/{id}/refund', name: 'app_admin_reservation_refund', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function refund(
+        Reservation $reservation,
+        Request $request,
+        HelloAssoPaymentHandler $helloAssoHandler,
+        ReservationService $reservationService,
+        ReservationMailer $mailer,
+    ): Response {
+        if ($this->isCsrfTokenValid('refund_' . $reservation->getId(), $request->request->get('_token'))) {
+            $refunded = $helloAssoHandler->refund($reservation);
+
+            if ($refunded) {
+                $reservationService->cancel($reservation);
+                $mailer->sendCancellation($reservation);
+                $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' annulée et remboursée.');
+            } else {
+                $this->addFlash('error', 'Le remboursement a échoué. Vérifiez les logs.');
+            }
         }
 
         return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
