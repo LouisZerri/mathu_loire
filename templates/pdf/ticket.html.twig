@@ -195,7 +195,12 @@
         {% endfor %}
     {% endif %}
 
-    {% set seatAssignments = reservation.seatAssignments|filter(sa => sa.status == 'assigned') %}
+    {% set seatAssignments = [] %}
+    {% for sa in reservation.seatAssignments %}
+        {% if sa.status == 'assigned' %}
+            {% set seatAssignments = seatAssignments|merge([sa]) %}
+        {% endif %}
+    {% endfor %}
 
     {% for i in 0..(places|length - 1) %}
     <div class="ticket">

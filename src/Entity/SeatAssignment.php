@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\SeatAssignmentRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SeatAssignmentRepository::class)]
 class SeatAssignment
@@ -14,6 +15,7 @@ class SeatAssignment
     private ?int $id = null;
 
     #[ORM\Column(length: 20)]
+    #[Assert\Choice(choices: ['assigned', 'blocked'], message: 'Statut invalide.')]
     private ?string $status = null;
 
     #[ORM\ManyToOne(inversedBy: 'seatAssignments')]

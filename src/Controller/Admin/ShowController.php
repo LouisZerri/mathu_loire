@@ -7,9 +7,11 @@ use App\Form\ShowType;
 use App\Repository\ShowRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin/spectacles')]
 class ShowController extends AbstractController
@@ -25,13 +27,14 @@ class ShowController extends AbstractController
     }
 
     #[Route('/new', name: 'app_admin_show_new')]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
         $show = new Show();
         $form = $this->createForm(ShowType::class, $show);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->handleImageUpload($form, $show, $slugger);
             $em->persist($show);
             $em->flush();
 
@@ -48,12 +51,13 @@ class ShowController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_admin_show_edit', requirements: ['id' => '\d+'])]
-    public function edit(Show $show, Request $request, EntityManagerInterface $em): Response
+    public function edit(Show $show, Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
         $form = $this->createForm(ShowType::class, $show);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->handleImageUpload($form, $show, $slugger);
             $em->flush();
 
             $this->addFlash('success', 'Spectacle "' . $show->getTitle() . '" mis à jour.');
@@ -72,15 +76,39 @@ class ShowController extends AbstractController
     public function delete(Show $show, Request $request, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete_show_' . $show->getId(), $request->request->get('_token'))) {
-            if ($show->getRepresentations()->count() > 0) {
-                $this->addFlash('error', 'Impossible de supprimer : ce spectacle a des représentations associées.');
-            } else {
-                $em->remove($show);
-                $em->flush();
-                $this->addFlash('success', 'Spectacle supprimé.');
+            if ($show->getImageName()) {
+                $imagePath = $this->getParameter('kernel.project_dir') . '/public/uploads/shows/' . $show->getImageName();
+                if (file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
             }
+            $em->remove($show);
+            $em->flush();
+            $this->addFlash('success', 'Spectacle "' . $show->getTitle() . '" et toutes ses données supprimés.');
         }
 
         return $this->redirectToRoute('app_admin_show_index');
+    }
+
+    private function handleImageUpload($form, Show $show, SluggerInterface $slugger): void
+    {
+        /** @var UploadedFile|null $imageFile */
+        $imageFile = $form->get('imageFile')->getData();
+
+        if (!$imageFile) {
+            return;
+        }
+
+        // Supprimer l'ancienne image
+        if ($show->getImageName()) {
+            $oldPath = $this->getParameter('kernel.project_dir') . '/public/uploads/shows/' . $show->getImageName();
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+        }
+
+        $filename = $slugger->slug($show->getTitle()) . '-' . uniqid() . '.' . $imageFile->guessExtension();
+        $imageFile->move($this->getParameter('kernel.project_dir') . '/public/uploads/shows', $filename);
+        $show->setImageName($filename);
     }
 }

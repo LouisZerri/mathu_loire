@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 8mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; font-size: 9px; }
+
+        .header {
+            text-align: center;
+            margin-bottom: 5mm;
+            padding-bottom: 3mm;
+            border-bottom: 2px solid #8b4572;
+        }
+
+        .header .title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #8b4572;
+        }
+
+        .header .show {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-top: 2mm;
+        }
+
+        .header .date {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .scene {
+            text-align: center;
+            background: #1f2937;
+            color: #fff;
+            padding: 2mm;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 4mm;
+            letter-spacing: 2px;
+        }
+
+        .plan {
+            text-align: center;
+        }
+
+        .row-line {
+            margin-bottom: 1mm;
+            white-space: nowrap;
+        }
+
+        .row-label {
+            display: inline-block;
+            width: 12px;
+            font-size: 8px;
+            font-weight: 700;
+            color: #666;
+            text-align: center;
+        }
+
+        .seat {
+            display: inline-block;
+            width: 18px;
+            height: 16px;
+            border: 1px solid #ccc;
+            text-align: center;
+            font-size: 6px;
+            line-height: 16px;
+            margin: 0 0.5px;
+            border-radius: 2px;
+        }
+
+        .seat-available { background: #dcfce7; border-color: #86efac; }
+        .seat-assigned { background: #dbeafe; border-color: #93c5fd; }
+        .seat-blocked { background: #fed7aa; border-color: #fdba74; }
+        .seat-broken { background: #e5e7eb; border-color: #d1d5db; color: #999; }
+        .seat-empty { border: none; background: none; }
+        .seat-gap { display: inline-block; width: 10px; }
+
+        .legend {
+            margin-top: 5mm;
+            text-align: center;
+        }
+
+        .legend-item {
+            display: inline-block;
+            margin: 0 4mm;
+        }
+
+        .legend-box {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            vertical-align: middle;
+            margin-right: 2px;
+        }
+
+        .footer {
+            margin-top: 5mm;
+            text-align: center;
+            font-size: 7px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Plan de salle</div>
+        <div class="show">{{ representation.show.title }}</div>
+        <div class="date">{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+    </div>
+
+    <div class="scene">SCÈNE</div>
+
+    {% set seatMap = {
+        A: [7, 8, 9, 10],
+        B: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        C: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        D: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        E: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        F: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        G: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        H: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        I: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        J: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        K: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        L: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        M: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        N: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        O: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        P: [6, 7, 8, 9, 10, 11],
+        R: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    } %}
+
+    {% set rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R'] %}
+
+    <div class="plan">
+        {% for row in rows %}
+            {% set numbers = seatMap[row] %}
+            <div class="row-line">
+                <span class="row-label">{{ row }}</span>
+
+                {% for n in 1..5 %}
+                    {% if n in numbers %}
+                        {% set key = row ~ n %}
+                        {% set s = seatData[key]|default(null) %}
+                        {% if s %}
+                            <span class="seat seat-{{ s.status }}" title="{{ key }}{% if s.spectatorName %} — {{ s.spectatorName }}{% endif %}">{{ n }}</span>
+                        {% else %}
+                            <span class="seat seat-empty"></span>
+                        {% endif %}
+                    {% else %}
+                        <span class="seat seat-empty"></span>
+                    {% endif %}
+                {% endfor %}
+
+                <span class="seat-gap"></span>
+
+                {% for n in 6..13 %}
+                    {% if n in numbers %}
+                        {% set key = row ~ n %}
+                        {% set s = seatData[key]|default(null) %}
+                        {% if s %}
+                            <span class="seat seat-{{ s.status }}" title="{{ key }}{% if s.spectatorName %} — {{ s.spectatorName }}{% endif %}">{{ n }}</span>
+                        {% else %}
+                            <span class="seat seat-empty"></span>
+                        {% endif %}
+                    {% else %}
+                        <span class="seat seat-empty"></span>
+                    {% endif %}
+                {% endfor %}
+
+                <span class="row-label">{{ row }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="legend">
+        <span class="legend-item"><span class="legend-box seat-available"></span> Libre</span>
+        <span class="legend-item"><span class="legend-box seat-assigned"></span> Assigné</span>
+        <span class="legend-item"><span class="legend-box seat-blocked"></span> Bloqué</span>
+        <span class="legend-item"><span class="legend-box seat-broken"></span> Cassé</span>
+    </div>
+
+    <div class="footer">
+        Les Mathu'Loire — Édité le {{ 'now'|format_datetime(pattern='dd/MM/yyyy à HH:mm', locale='fr', timezone='Europe/Paris') }}
+    </div>
+</body>
+</html>

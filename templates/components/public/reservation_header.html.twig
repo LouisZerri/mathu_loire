@@ -1,12 +1,23 @@
-<div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
-    <h1 class="text-2xl font-semibold text-gray-900">{{ representation.show.title }}</h1>
-    <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-600">
-        <span>{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</span>
-        <span>&middot;</span>
-        <span>{{ representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</span>
-    </div>
-    <div class="flex gap-4 mt-3 text-sm text-gray-500">
-        <span>Adulte : {{ representation.adultPrice }} &euro;</span>
-        <span>Enfant : {{ representation.childPrice }} &euro;</span>
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
+    <div class="flex items-center">
+        {% if representation.show.imageName %}
+        <div class="w-24 shrink-0 hidden sm:block">
+            <img src="{{ asset('uploads/shows/' ~ representation.show.imageName) }}"
+                 alt="{{ representation.show.title }}"
+                 class="w-full h-full object-cover">
+        </div>
+        {% endif %}
+
+        <div class="p-4 flex-1">
+            <div class="flex items-center justify-between">
+                <h1 class="text-lg font-semibold text-gray-900">{{ representation.show.title }}</h1>
+                <a href="{{ path('app_show_detail', { id: representation.show.id }) }}" class="text-xs text-gray-400 hover:text-gray-700 shrink-0 ml-4">Détails &rarr;</a>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
+                <span>{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</span>
+                <span>&middot;</span>
+                <span>Adulte {{ representation.adultPrice }} € · Enfant {{ representation.childPrice }} €</span>
+            </div>
+        </div>
     </div>
 </div>

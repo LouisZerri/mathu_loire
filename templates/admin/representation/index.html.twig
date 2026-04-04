@@ -52,6 +52,7 @@
                     <td class="px-4 py-3 text-right text-gray-500">{{ rep.groupPrice ? rep.groupPrice|number_format(2, ',', ' ') ~ ' €' : '-' }}</td>
                     <td class="px-4 py-3 text-right">
                         <div class="flex items-center justify-end gap-3">
+                            <a href="{{ path('app_admin_representation_report', { id: rep.id }) }}" target="_blank" class="text-xs text-gray-500 hover:text-gray-900">Relevé</a>
                             <a href="{{ path('app_admin_representation_edit', { id: rep.id }) }}" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
                             <form method="post" action="{{ path('app_admin_representation_cancel', { id: rep.id }) }}" onsubmit="return confirm('Annuler cette représentation ?')">
                                 <input type="hidden" name="_token" value="{{ csrf_token('cancel_rep_' ~ rep.id) }}">

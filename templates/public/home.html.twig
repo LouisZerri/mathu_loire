@@ -3,27 +3,31 @@
 {% block title %}Les Mathu'Loire - Billetterie en ligne{% endblock %}
 
 {% block body %}
-<section class="relative h-[500px] overflow-hidden">
+{# Hero #}
+<section class="relative bg-gray-900">
     <img src="{{ asset('images/Slider-2025.jpg') }}"
          alt=""
-         class="absolute inset-0 w-full h-full object-cover">
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div class="relative h-full flex flex-col items-center justify-center text-center text-white px-4">
+         class="w-full h-auto block">
+    <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center text-white px-4">
         <img src="{{ asset('images/matu-loire-logo-couleur-sans-fond2-11.png') }}"
              alt="Les Mathu'Loire"
-             class="h-16 mb-6">
-        <h1 class="text-4xl font-bold mb-3">Billetterie en ligne</h1>
-        <p class="text-lg text-white/80 mb-8">Réservez vos places pour nos prochaines représentations</p>
+             class="h-10 sm:h-14 mb-3">
+        <h1 class="text-2xl sm:text-4xl font-bold mb-2">Cie Les Mathu'Loire</h1>
+        <p class="text-xs sm:text-sm text-white/70 max-w-md mb-4">Compagnie de théâtre amateur depuis 2002</p>
         <a href="{{ path('app_reservation_index') }}"
-           class="bg-white text-gray-900 px-8 py-3 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
-            Voir les représentations
+           class="bg-white text-gray-900 px-6 py-2 rounded-full text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors">
+            Réserver vos places
         </a>
     </div>
 </section>
 
+{# Prochaines représentations #}
 {% if representations|length > 0 %}
 <section class="max-w-5xl mx-auto px-4 py-16">
-    <h2 class="text-2xl font-semibold text-gray-900 mb-8">Prochaines représentations</h2>
+    <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-semibold text-gray-900">Prochaines représentations</h2>
+        <p class="text-gray-500 mt-2">Réservez dès maintenant vos places</p>
+    </div>
 
     <div class="space-y-3">
         {% for representation in representations|slice(0, 6) %}
@@ -40,4 +44,147 @@
     {% endif %}
 </section>
 {% endif %}
+
+{# Nos spectacles #}
+{% if shows|length > 0 %}
+<section class="bg-white border-t border-gray-200">
+    <div class="max-w-5xl mx-auto px-4 py-16">
+        <div class="text-center mb-10">
+            <h2 class="text-2xl sm:text-3xl font-semibold text-gray-900">Nos spectacles</h2>
+            <p class="text-gray-500 mt-2">Découvrez les pièces de la compagnie</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for show in shows %}
+            <a href="{{ path('app_show_detail', { id: show.id }) }}" class="group">
+                <div class="bg-gray-100 rounded-lg overflow-hidden aspect-[2/3] mb-3">
+                    {% if show.imageName %}
+                        <img src="{{ asset('uploads/shows/' ~ show.imageName) }}"
+                             alt="{{ show.title }}"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm">Pas d'affiche</div>
+                    {% endif %}
+                </div>
+                <h3 class="font-semibold text-gray-900 group-hover:underline">{{ show.title }}</h3>
+                <p class="text-sm text-gray-500 mt-0.5">{{ show.author }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{# À propos #}
+<section class="relative border-t border-gray-200">
+    <img src="{{ asset('images/Slider-2025-2.jpg') }}"
+         alt=""
+         class="w-full h-auto block">
+</section>
+
+<section class="bg-white border-t border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 py-16 text-center">
+        <h2 class="text-2xl sm:text-3xl font-semibold text-gray-900 mb-8">Notre histoire</h2>
+        <div class="space-y-4 text-gray-600 leading-relaxed text-sm sm:text-base">
+            <p>
+                L'association des Mathu'Loire est née le <strong>23 décembre 2002</strong>, sous le nom
+                "Association Culturelle St Mathurin Théâtre", avant de devenir la
+                <strong>Compagnie Théâtrale Les Mathu'Loire</strong> en juillet 2003.
+            </p>
+            <p>
+                Nos racines remontent à une quarantaine d'années, quand des parents d'élèves
+                organisaient des spectacles amateurs pour soutenir les écoles locales. Passionnés par le théâtre,
+                ils ont reformé la troupe autour des années 2000.
+            </p>
+            <p>
+                Aujourd'hui, nous sommes une vingtaine de membres actifs — comédiens, techniciens,
+                costumiers, décorateurs — tous bénévoles, unis par la même envie de partager notre passion.
+            </p>
+        </div>
+    </div>
+</section>
+
+{# Chiffres clés #}
+<section class="bg-gray-50 border-t border-gray-200">
+    <div class="max-w-5xl mx-auto px-4 py-16">
+        <h2 class="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-10">La compagnie en chiffres</h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="text-center">
+                <div class="text-3xl sm:text-4xl font-bold text-gray-900">20+</div>
+                <div class="text-sm text-gray-500 mt-1">Ans d'existence</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl sm:text-4xl font-bold text-gray-900">20</div>
+                <div class="text-sm text-gray-500 mt-1">Membres actifs</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl sm:text-4xl font-bold text-gray-900">6+</div>
+                <div class="text-sm text-gray-500 mt-1">Représentations / saison</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl sm:text-4xl font-bold text-gray-900">1000</div>
+                <div class="text-sm text-gray-500 mt-1">Spectateurs / saison</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# Valeurs #}
+<section class="bg-white border-t border-gray-200">
+    <div class="max-w-5xl mx-auto px-4 py-16">
+        <h2 class="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-10">Nos valeurs</h2>
+
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center">
+                <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-1">Échange</h3>
+                <p class="text-sm text-gray-500">Partager notre passion du théâtre avec le public</p>
+            </div>
+            <div class="text-center">
+                <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-1">Partage</h3>
+                <p class="text-sm text-gray-500">Donner nos recettes à des associations caritatives</p>
+            </div>
+            <div class="text-center">
+                <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-1">Rire</h3>
+                <p class="text-sm text-gray-500">Vous faire oublier le quotidien pendant deux heures</p>
+            </div>
+            <div class="text-center">
+                <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-1">Simplicité</h3>
+                <p class="text-sm text-gray-500">Des spectacles authentiques, joués avec le cœur</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# CTA #}
+<section class="bg-gray-900 text-white">
+    <div class="max-w-5xl mx-auto px-4 py-16 text-center">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-4">Prêt à passer un bon moment ?</h2>
+        <p class="text-gray-400 mb-8 max-w-lg mx-auto">Rejoignez-nous pour une soirée de rires et de bonne humeur à l'Espace Lézin Moisseron de Saint-Mathurin-sur-Loire.</p>
+        <a href="{{ path('app_reservation_index') }}"
+           class="inline-block bg-white text-gray-900 px-8 py-3 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
+            Réserver mes places
+        </a>
+    </div>
+</section>
 {% endblock %}

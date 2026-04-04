@@ -20,6 +20,7 @@ class Representation
     #[ORM\Column]
     #[Assert\NotNull(message: 'La date est obligatoire.')]
     #[Assert\GreaterThan('today', message: 'La date doit être dans le futur.')]
+    #[Assert\LessThan('+3 years', message: 'La date ne peut pas dépasser 3 ans dans le futur.')]
     private ?\DateTime $datetime = null;
 
     #[ORM\Column(length: 20)]
@@ -48,6 +49,7 @@ class Representation
     private ?string $childPrice = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
+    #[Assert\GreaterThan(value: 0, message: 'Le tarif doit être supérieur à 0.')]
     private ?string $groupPrice = null;
 
     #[ORM\ManyToOne(inversedBy: 'representations')]
@@ -57,13 +59,13 @@ class Representation
     /**
      * @var Collection<int, Reservation>
      */
-    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'representation', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'representation', cascade: ['remove'], orphanRemoval: true)]
     private Collection $reservations;
 
     /**
      * @var Collection<int, SeatAssignment>
      */
-    #[ORM\OneToMany(targetEntity: SeatAssignment::class, mappedBy: 'representation', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: SeatAssignment::class, mappedBy: 'representation', cascade: ['remove'], orphanRemoval: true)]
     private Collection $seatAssignments;
 
     public function __construct()

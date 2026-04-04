@@ -24,11 +24,11 @@ class AppFixtures extends Fixture
     {
         // === USERS ===
         $admin = new User();
-        $admin->setEmail('admin@les-mathuloire.com');
-        $admin->setFirstName('Jean');
-        $admin->setLastName('Dupont');
+        $admin->setEmail('l.zerri@gmail.com');
+        $admin->setFirstName('Louis');
+        $admin->setLastName('Zerri');
         $admin->setRoles(['ROLE_ADMIN']);
-        $admin->setPassword($this->passwordHasher->hashPassword($admin, 'admin123'));
+        $admin->setPassword($this->passwordHasher->hashPassword($admin, 'password'));
         $manager->persist($admin);
 
         $billettiste = new User();
@@ -42,13 +42,43 @@ class AppFixtures extends Fixture
         // === SHOWS ===
         $show1 = new Show();
         $show1->setTitle('Miss Purple mène l\'enquête');
-        $show1->setDescription('Une comédie policière hilarante où Miss Purple, détective amateur, tente de résoudre un mystère lors d\'un dîner mondain.');
+        $show1->setDescription('Comédie policière de boulevard en 4 actes.');
+        $show1->setSynopsis('Violette, une ancienne gendarme surnommée Miss Purple, rend visite à sa tante dans la maison de retraite « Les Glycines ». Elle y découvre que le directeur a été assassiné. Ni une ni deux, elle reprend du service et mène l\'enquête avec l\'aide des résidents aussi excentriques qu\'attachants et du personnel de l\'établissement. Entre quiproquos, faux-semblants et révélations surprenantes, Miss Purple va devoir démêler le vrai du faux pour démasquer le coupable...');
+        $show1->setAuthor('Dominique Eulalie');
+        $show1->setDirector('Mi-Claude Beziau');
+        $show1->setDuration('1h30 avec entracte');
+        $show1->setImageName('2023-2024-Miss-Purple-Affiche-A4-V1-WEB-644x906.png');
         $manager->persist($show1);
 
         $show2 = new Show();
         $show2->setTitle('Un gendre idéal');
-        $show2->setDescription('Un vaudeville déjanté où un futur gendre tente de faire bonne impression auprès de sa belle-famille.');
+        $show2->setDescription('Comédie de boulevard en 2 actes.');
+        $show2->setSynopsis('Simon, avocat renommé et fortuné, coule des jours tranquilles avec son épouse Rebecca dans leur propriété « Les Glycines ». Leur existence paisible est bouleversée lorsque leur fille Alicia les appelle pour leur annoncer une nouvelle stupéfiante : elle va épouser un inconnu dans trois jours. Cette annonce inattendue va perturber leur vie bien ordonnée et créer le mystère sur les heures à venir...');
+        $show2->setAuthor('Yves Billot');
+        $show2->setDirector('Mi-Claude Beziau');
+        $show2->setDuration('1h30 avec entracte');
+        $show2->setImageName('Un-gendre-ideal-_-V2-644x906.png');
         $manager->persist($show2);
+
+        $show3 = new Show();
+        $show3->setTitle('Pauvre Pêcheur');
+        $show3->setDescription('Comédie de boulevard en 3 actes.');
+        $show3->setSynopsis('Robert et Yvonne, un vieux couple, passent leur temps à se chamailler. Robert a une idée : disparaître pendant deux jours pour choquer sa femme et la faire changer de comportement. Il parie même ses économies avec son voisin qu\'elle le cherchera désespérément. Mais son plan va prendre une tournure totalement inattendue...');
+        $show3->setAuthor('Anny Lescalier');
+        $show3->setDirector('Mi-Claude Beziau');
+        $show3->setDuration('1h30 avec entracte');
+        $show3->setImageName('Pauvre_Pecheur_2023_Annulation-644x857.gif');
+        $manager->persist($show3);
+
+        $show4 = new Show();
+        $show4->setTitle('Chasse en Enfer');
+        $show4->setDescription('Comédie de boulevard en 3 actes.');
+        $show4->setSynopsis('Robert et Félix, deux chasseurs invétérés, louent une chambre au « Clos des Cerfs », une vieille ferme tenue par Germaine, dans les Ardennes. Les deux compères ne se doutent pas de ce qui les attend. Les 8 personnages hauts en couleur vont à coup sûr vous faire mourir de rire !');
+        $show4->setAuthor('Charles Istace');
+        $show4->setDirector('Mi-Claude Beziau');
+        $show4->setDuration('1h30 avec entracte');
+        $show4->setImageName('Printoclock_Affiche-30-x-40-A3_v1-484x644.jpg');
+        $manager->persist($show4);
 
         // === REPRESENTATIONS ===
         $representations = [];
@@ -81,6 +111,46 @@ class AppFixtures extends Fixture
         foreach ($dates2 as $date) {
             $rep = new Representation();
             $rep->setShow($show2);
+            $rep->setDatetime($date);
+            $rep->setStatus('active');
+            $rep->setMaxOnlineReservations(140);
+            $rep->setVenueCapacity(175);
+            $rep->setAdultPrice('9.00');
+            $rep->setChildPrice('6.00');
+            $manager->persist($rep);
+            $representations[] = $rep;
+        }
+
+        $dates3 = [
+            new \DateTime('2027-03-07 20:30'),
+            new \DateTime('2027-03-08 15:00'),
+            new \DateTime('2027-03-14 20:30'),
+            new \DateTime('2027-03-15 15:00'),
+        ];
+
+        foreach ($dates3 as $date) {
+            $rep = new Representation();
+            $rep->setShow($show3);
+            $rep->setDatetime($date);
+            $rep->setStatus('active');
+            $rep->setMaxOnlineReservations(140);
+            $rep->setVenueCapacity(175);
+            $rep->setAdultPrice('9.00');
+            $rep->setChildPrice('6.00');
+            $manager->persist($rep);
+            $representations[] = $rep;
+        }
+
+        $dates4 = [
+            new \DateTime('2027-03-28 20:30'),
+            new \DateTime('2027-03-29 15:00'),
+            new \DateTime('2027-04-04 20:30'),
+            new \DateTime('2027-04-05 15:00'),
+        ];
+
+        foreach ($dates4 as $date) {
+            $rep = new Representation();
+            $rep->setShow($show4);
             $rep->setDatetime($date);
             $rep->setStatus('active');
             $rep->setMaxOnlineReservations(140);

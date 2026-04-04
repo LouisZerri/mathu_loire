@@ -3,37 +3,61 @@
 {% block title %}Réserver - {{ representation.show.title }} - Les Mathu'Loire{% endblock %}
 
 {% block body %}
-<section class="max-w-3xl mx-auto px-4 py-12">
-    <a href="{{ path('app_reservation_index') }}" class="text-sm text-gray-500 hover:text-gray-700 mb-6 inline-block">&larr; Retour à la billetterie</a>
-
-    {% include 'components/public/reservation_header.html.twig' with { representation: representation } %}
+<section class="max-w-5xl mx-auto px-4 py-8">
+    <a href="{{ path('app_reservation_index') }}" class="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">&larr; Retour à la billetterie</a>
 
     {% for flash in app.flashes('error') %}
-        <div class="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm mb-6">{{ flash }}</div>
+        <div class="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">{{ flash }}</div>
     {% endfor %}
 
-    {{ form_start(form, { attr: { class: 'space-y-8' } }) }}
+    {{ form_start(form, { attr: { class: '' } }) }}
 
-        {% include 'components/public/reservation_places.html.twig' with { form: form, representation: representation } %}
-        {% include 'components/public/reservation_contact.html.twig' with { form: form } %}
-
-        <div class="bg-white border border-gray-200 rounded-lg p-6">
-            <label class="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
-                {{ form_widget(form.rgpdConsent, { attr: { class: 'mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900' } }) }}
-                <span>
-                    J'accepte que mes données personnelles soient traitées pour la gestion de ma réservation conformément à la
-                    <a href="{{ path('app_privacy') }}" target="_blank" class="underline hover:text-gray-900">politique de confidentialité</a>.
-                </span>
-            </label>
-            {{ form_errors(form.rgpdConsent) }}
+    <div class="grid lg:grid-cols-5 gap-6">
+        <div class="lg:col-span-3 space-y-5">
+            {% include 'components/public/reservation_header.html.twig' with { representation: representation } %}
+            {% include 'components/public/reservation_places.html.twig' with { form: form, representation: representation } %}
+            {% include 'components/public/reservation_contact.html.twig' with { form: form } %}
         </div>
 
-        <div class="pt-4">
-            <button type="submit"
-                    class="w-full bg-gray-900 text-white py-3 px-6 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-colors">
-                Confirmer la réservation
-            </button>
+        <div class="lg:col-span-2">
+            <div class="lg:sticky lg:top-8 space-y-4">
+                <div class="bg-white border border-gray-200 rounded-lg p-5">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-3">Votre réservation</h3>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div>{{ representation.show.title }}</div>
+                        <div>{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+                        <div class="text-gray-400">{{ representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }} · Espace Lézin Moisseron</div>
+                    </div>
+                    <div class="border-t border-gray-100 mt-3 pt-3 space-y-1 text-sm">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Adulte</span>
+                            <span>{{ representation.adultPrice }} €</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Enfant</span>
+                            <span>{{ representation.childPrice }} €</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded-lg p-5">
+                    <label class="flex items-start gap-3 text-xs text-gray-600 cursor-pointer">
+                        {{ form_widget(form.rgpdConsent, { attr: { class: 'mt-0.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900' } }) }}
+                        <span>
+                            J'accepte que mes données soient traitées conformément à la
+                            <a href="{{ path('app_privacy') }}" target="_blank" class="underline hover:text-gray-900">politique de confidentialité</a>.
+                        </span>
+                    </label>
+                    {{ form_errors(form.rgpdConsent) }}
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gray-900 text-white py-3 px-6 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-colors">
+                    Confirmer la réservation
+                </button>
+            </div>
         </div>
+    </div>
 
     {{ form_end(form) }}
 </section>

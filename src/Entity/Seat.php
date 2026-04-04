@@ -6,6 +6,7 @@ use App\Repository\SeatRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SeatRepository::class)]
 class Seat
@@ -16,9 +17,13 @@ class Seat
     private ?int $id = null;
 
     #[ORM\Column(name: '`row`', length: 10)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 10)]
     private ?string $row = null;
 
     #[ORM\Column]
+    #[Assert\NotNull]
+    #[Assert\Range(min: 1, max: 50)]
     private ?int $number = null;
 
     #[ORM\Column]

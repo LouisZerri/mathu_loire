@@ -74,10 +74,17 @@
 <div class="bg-white border border-gray-200 rounded-lg p-5">
     <h3 class="text-sm font-semibold text-gray-900 mb-4">Actions</h3>
 
-    <form method="post" action="{{ path('app_admin_reservation_resend_email', { id: reservation.id }) }}">
-        <input type="hidden" name="_token" value="{{ csrf_token('resend_email_' ~ reservation.id) }}">
-        <button type="submit" class="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-            Renvoyer l'email de confirmation
-        </button>
-    </form>
+    <div class="space-y-2">
+        <form method="post" action="{{ path('app_admin_reservation_resend_email', { id: reservation.id }) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('resend_email_' ~ reservation.id) }}">
+            <button type="submit" class="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                Renvoyer l'email de confirmation
+            </button>
+        </form>
+
+        <a href="{{ path('app_admin_reservation_print', { id: reservation.id }) }}" target="_blank"
+           class="block w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
+            Imprimer les billets (80mm)
+        </a>
+    </div>
 </div>

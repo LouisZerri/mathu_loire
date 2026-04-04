@@ -103,4 +103,25 @@ class ReservationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return Reservation[]
+     */
+    public function findTodayReservations(): array
+    {
+        $today = new \DateTime('today');
+        $tomorrow = new \DateTime('tomorrow');
+
+        return $this->createQueryBuilder('r')
+            ->join('r.representation', 'rep')
+            ->join('rep.show', 's')
+            ->addSelect('rep', 's')
+            ->where('r.createdAt >= :today')
+            ->andWhere('r.createdAt < :tomorrow')
+            ->setParameter('today', $today)
+            ->setParameter('tomorrow', $tomorrow)
+            ->orderBy('r.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

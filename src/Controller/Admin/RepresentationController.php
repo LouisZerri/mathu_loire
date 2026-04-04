@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Representation;
 use App\Form\RepresentationType;
 use App\Repository\RepresentationRepository;
+use App\Service\SessionReportPdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -88,5 +89,16 @@ class RepresentationController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_representation_index');
+    }
+
+    #[Route('/{id}/releve', name: 'app_admin_representation_report', requirements: ['id' => '\d+'])]
+    public function report(Representation $representation, SessionReportPdfGenerator $pdfGenerator): Response
+    {
+        $pdf = $pdfGenerator->generate($representation);
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('inline; filename="releve-seance-%d.pdf"', $representation->getId()),
+        ]);
     }
 }

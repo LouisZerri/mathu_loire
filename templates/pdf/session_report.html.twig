@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; font-size: 10px; }
+        .wrapper { padding: 15mm; }
+
+        .header {
+            display: table;
+            width: 100%;
+            border-bottom: 2px solid #8b4572;
+            padding-bottom: 5mm;
+            margin-bottom: 5mm;
+        }
+
+        .header-left {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .header-right {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .header .title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #8b4572;
+        }
+
+        .header .subtitle {
+            font-size: 11px;
+            color: #666;
+            margin-top: 1mm;
+        }
+
+        .header .show-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .header .show-date {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .stats {
+            display: table;
+            width: 100%;
+            margin-bottom: 5mm;
+        }
+
+        .stat-box {
+            display: table-cell;
+            text-align: center;
+            padding: 4mm;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .stat-label {
+            font-size: 8px;
+            color: #999;
+            text-transform: uppercase;
+            margin-top: 1mm;
+        }
+
+        h2 {
+            font-size: 12px;
+            font-weight: 700;
+            color: #8b4572;
+            margin: 5mm 0 2mm;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        table.data {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+        }
+
+        table.data th {
+            text-align: left;
+            font-size: 8px;
+            color: #8b4572;
+            text-transform: uppercase;
+            padding: 2mm 2mm;
+            border-bottom: 1px solid #8b4572;
+            font-weight: 600;
+        }
+
+        table.data td {
+            padding: 1.5mm 2mm;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        table.data tr:nth-child(even) {
+            background: #fdf8fb;
+        }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: 700; }
+
+        .footer {
+            margin-top: 5mm;
+            padding-top: 3mm;
+            border-top: 1px solid #e5e7eb;
+            font-size: 8px;
+            color: #999;
+            display: table;
+            width: 100%;
+        }
+
+        .footer-left { display: table-cell; }
+        .footer-right { display: table-cell; text-align: right; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.5mm 3mm;
+            border-radius: 2px;
+            font-size: 8px;
+            font-weight: 600;
+        }
+
+        .badge-pmr {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="header">
+        <div class="header-left">
+            <div class="title">Relevé de séance</div>
+            <div class="subtitle">Les Mathu'Loire — Document de contrôle billetterie</div>
+        </div>
+        <div class="header-right">
+            <div class="show-title">{{ representation.show.title }}</div>
+            <div class="show-date">{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-value">{{ totalSpectators }}</div>
+            <div class="stat-label">Spectateurs</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ totalAdults }}</div>
+            <div class="stat-label">Adultes</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ totalChildren }}</div>
+            <div class="stat-label">Enfants</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ totalInvitations }}</div>
+            <div class="stat-label">Invitations</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ totalReservations }}</div>
+            <div class="stat-label">Réservations</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ totalRevenue|number_format(2, ',', ' ') }} €</div>
+            <div class="stat-label">Recettes</div>
+        </div>
+    </div>
+
+    <h2>Liste des réservations</h2>
+
+    <table class="data">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Ville</th>
+                <th>Téléphone</th>
+                <th class="text-center">Ad.</th>
+                <th class="text-center">Enf.</th>
+                <th class="text-center">Inv.</th>
+                <th class="text-center">PMR</th>
+                <th>Places</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in reservations %}
+            {% set resTotal = (res.nbAdults * representation.adultPrice) + (res.nbChildren * representation.childPrice) %}
+            <tr>
+                <td>{{ res.id }}</td>
+                <td class="font-bold">{{ res.spectatorLastName|upper }}</td>
+                <td>{{ res.spectatorFirstName }}</td>
+                <td>{{ res.spectatorCity }}</td>
+                <td>{{ res.spectatorPhone }}</td>
+                <td class="text-center">{{ res.nbAdults }}</td>
+                <td class="text-center">{{ res.nbChildren }}</td>
+                <td class="text-center">{{ res.nbInvitations }}</td>
+                <td class="text-center">{% if res.isPMR %}<span class="badge badge-pmr">PMR</span>{% endif %}</td>
+                <td>
+                    {% set resAssignments = [] %}
+                    {% for sa in res.seatAssignments %}
+                        {% if sa.status == 'assigned' %}
+                            {% set resAssignments = resAssignments|merge([sa.seat.row ~ sa.seat.number]) %}
+                        {% endif %}
+                    {% endfor %}
+                    {{ resAssignments|join(', ')|default('—') }}
+                </td>
+                <td class="text-right font-bold">{{ resTotal|number_format(2, ',', ' ') }} €</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="border-top: 2px solid #8b4572;">
+                <td colspan="5" class="font-bold" style="padding-top: 3mm;">TOTAL</td>
+                <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalAdults }}</td>
+                <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalChildren }}</td>
+                <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalInvitations }}</td>
+                <td></td>
+                <td></td>
+                <td class="text-right font-bold" style="padding-top: 3mm;">{{ totalRevenue|number_format(2, ',', ' ') }} €</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="footer">
+        <div class="footer-left">
+            Les Mathu'Loire — 100 Levée du Roi René — 49250 Saint-Mathurin-sur-Loire
+        </div>
+        <div class="footer-right">
+            Édité le {{ 'now'|format_datetime(pattern='dd/MM/yyyy à HH:mm', locale='fr', timezone='Europe/Paris') }}
+        </div>
+    </div>
+</div>
+</body>
+</html>

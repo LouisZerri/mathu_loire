@@ -8,6 +8,7 @@ use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
 use App\Service\ReservationMailer;
 use App\Service\ReservationService;
+use App\Service\TicketThermalPdfGenerator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -88,5 +89,18 @@ class ReservationController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/{id}/print', name: 'app_admin_reservation_print', requirements: ['id' => '\d+'])]
+    public function print(
+        Reservation $reservation,
+        TicketThermalPdfGenerator $pdfGenerator,
+    ): Response {
+        $pdf = $pdfGenerator->generate($reservation);
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('inline; filename="billets-thermal-%d.pdf"', $reservation->getId()),
+        ]);
     }
 }

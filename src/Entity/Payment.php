@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\PaymentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PaymentRepository::class)]
 class Payment
@@ -15,12 +16,15 @@ class Payment
     private ?int $id = null;
 
     #[ORM\Column(length: 20)]
+    #[Assert\Choice(choices: ['helloasso', 'stripe', 'paypal'], message: 'Méthode de paiement invalide.')]
     private ?string $method = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotNull]
     private ?string $amount = null;
 
     #[ORM\Column(length: 20)]
+    #[Assert\Choice(choices: ['payment', 'refund'], message: 'Type de paiement invalide.')]
     private ?string $type = null;
 
     #[ORM\Column(length: 255, nullable: true)]

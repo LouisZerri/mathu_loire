@@ -36,12 +36,10 @@
                 <td class="px-4 py-3 text-right">
                     <div class="flex items-center justify-end gap-3">
                         <a href="{{ path('app_admin_show_edit', { id: show.id }) }}" class="text-xs text-gray-500 hover:text-gray-900">Éditer</a>
-                        {% if show.representations|length == 0 %}
-                        <form method="post" action="{{ path('app_admin_show_delete', { id: show.id }) }}" onsubmit="return confirm('Supprimer ce spectacle ?')">
+                        <form method="post" action="{{ path('app_admin_show_delete', { id: show.id }) }}" onsubmit="return confirm('Supprimer « {{ show.title }} » et toutes ses représentations, réservations et paiements associés ? Cette action est irréversible.')">
                             <input type="hidden" name="_token" value="{{ csrf_token('delete_show_' ~ show.id) }}">
                             <button type="submit" class="text-xs text-red-500 hover:text-red-700">Supprimer</button>
                         </form>
-                        {% endif %}
                     </div>
                 </td>
             </tr>

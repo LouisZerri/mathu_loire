@@ -1,11 +1,11 @@
-<a href="{{ path('app_reservation_new', { id: representation.id }) }}" class="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group">
+<div class="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
     <div class="flex items-center gap-6">
         <div class="text-center min-w-[60px]">
             <div class="text-2xl font-bold text-gray-900">{{ representation.datetime|format_datetime(pattern='dd', locale='fr', timezone='Europe/Paris') }}</div>
             <div class="text-xs text-gray-500 uppercase">{{ representation.datetime|format_datetime(pattern='MMM', locale='fr', timezone='Europe/Paris') }}</div>
         </div>
         <div>
-            <div class="font-medium text-gray-900">{{ representation.show.title }}</div>
+            <a href="{{ path('app_show_detail', { id: representation.show.id }) }}" class="font-medium text-gray-900 hover:underline">{{ representation.show.title }}</a>
             <div class="text-sm text-gray-500 mt-0.5">{{ representation.datetime|format_datetime(pattern='EEEE', locale='fr', timezone='Europe/Paris')|capitalize }} à {{ representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</div>
         </div>
     </div>
@@ -13,6 +13,6 @@
         <div class="text-sm text-gray-500 hidden sm:block">
             {{ representation.adultPrice }}€ / {{ representation.childPrice }}€
         </div>
-        <span class="text-sm font-medium text-gray-900 group-hover:translate-x-1 transition-transform">&rarr;</span>
+        <a href="{{ path('app_reservation_new', { id: representation.id }) }}" class="text-sm font-medium text-gray-900 hover:underline">Réserver &rarr;</a>
     </div>
-</a>
+</div>

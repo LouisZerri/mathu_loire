@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; color: #1f2937; margin: 0; padding: 0; background: #f9fafb; }
+        .container { max-width: 650px; margin: 0 auto; padding: 32px 24px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 32px; margin-bottom: 16px; }
+        .logo { text-align: center; margin-bottom: 24px; }
+        .logo img { height: 48px; }
+        h1 { font-size: 20px; margin: 0 0 4px; color: #111827; }
+        h2 { font-size: 16px; margin: 20px 0 10px; color: #111827; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+        .subtitle { color: #6b7280; font-size: 13px; margin-bottom: 20px; }
+        .stats { display: table; width: 100%; margin-bottom: 16px; }
+        .stat-box { display: table-cell; text-align: center; padding: 12px; background: #f9fafb; border-radius: 6px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #111827; }
+        .stat-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; margin-top: 2px; }
+        table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.data th { text-align: left; color: #9ca3af; font-weight: 500; font-size: 11px; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; }
+        table.data td { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+        .footer { text-align: center; margin-top: 24px; font-size: 11px; color: #9ca3af; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .empty { color: #9ca3af; font-style: italic; padding: 16px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <img src="https://www.les-mathuloire.com/wp-content/uploads/2015/09/matu-loire-logo-couleur-sans-fond2-11.png" alt="Les Mathu'Loire">
+            </div>
+
+            <h1>Rapport journalier</h1>
+            <p class="subtitle">{{ date|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
+
+            <h2>Saison en cours</h2>
+            <table style="width: 100%; margin-bottom: 16px;">
+                <tr>
+                    <td style="text-align: center; padding: 12px; background: #f9fafb; border-radius: 6px; width: 25%;">
+                        <div class="stat-value">{{ seasonStats.totalSpectators }}</div>
+                        <div class="stat-label">Spectateurs</div>
+                    </td>
+                    <td style="width: 4px;"></td>
+                    <td style="text-align: center; padding: 12px; background: #f9fafb; border-radius: 6px; width: 25%;">
+                        <div class="stat-value">{{ seasonStats.totalReservations }}</div>
+                        <div class="stat-label">Réservations</div>
+                    </td>
+                    <td style="width: 4px;"></td>
+                    <td style="text-align: center; padding: 12px; background: #f9fafb; border-radius: 6px; width: 25%;">
+                        <div class="stat-value">{{ seasonStats.totalRevenue|number_format(0, ',', ' ') }} €</div>
+                        <div class="stat-label">Recettes</div>
+                    </td>
+                    <td style="width: 4px;"></td>
+                    <td style="text-align: center; padding: 12px; background: #f9fafb; border-radius: 6px; width: 25%;">
+                        <div class="stat-value">{{ repStats|length }}</div>
+                        <div class="stat-label">Séances</div>
+                    </td>
+                </tr>
+            </table>
+
+            {% if repStats|length > 0 %}
+            <h2>Séances</h2>
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th>Spectacle</th>
+                        <th>Date</th>
+                        <th style="text-align: center;">Places</th>
+                        <th style="text-align: center;">Remplissage</th>
+                        <th style="text-align: right;">Recettes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rep in repStats %}
+                    <tr>
+                        <td>{{ rep.showTitle }}</td>
+                        <td>{{ rep.datetime|format_datetime(pattern='EEE d MMM HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</td>
+                        <td style="text-align: center;">{{ rep.totalPlaces }}/{{ rep.venueCapacity }}</td>
+                        <td style="text-align: center;">
+                            <span class="badge {{ rep.fillRate >= 70 ? 'badge-green' : 'badge-red' }}">{{ rep.fillRate }}%</span>
+                        </td>
+                        <td style="text-align: right;">{{ rep.revenue|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
+            {% if todayReservations|length > 0 %}
+            <h2>Réservations du jour ({{ todayReservations|length }})</h2>
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Nom</th>
+                        <th>Spectacle</th>
+                        <th style="text-align: center;">Places</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resa in todayReservations %}
+                    <tr>
+                        <td>{{ resa.id }}</td>
+                        <td>{{ resa.spectatorLastName|upper }} {{ resa.spectatorFirstName }}</td>
+                        <td>{{ resa.representation.show.title }}</td>
+                        <td style="text-align: center;">{{ resa.nbAdults + resa.nbChildren + resa.nbInvitations }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <h2>Réservations du jour</h2>
+            <p class="empty">Aucune réservation aujourd'hui.</p>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            <p>Rapport automatique — Cie Les Mathu'Loire</p>
+            <p>100 Levée du Roi René — 49250 Saint-Mathurin-sur-Loire</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Representation;
 use App\Entity\Reservation;
+use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -27,6 +28,12 @@ class AdminReservationType extends AbstractType
                     return $rep->getShow()->getTitle() . ' — ' . $rep->getDatetime()->format('d/m/Y H:i');
                 },
                 'label' => 'Représentation',
+                'query_builder' => function (EntityRepository $er) {
+                    return $er->createQueryBuilder('r')
+                        ->where('r.status = :status')
+                        ->setParameter('status', 'active')
+                        ->orderBy('r.datetime', 'ASC');
+                },
             ])
             ->add('status', ChoiceType::class, [
                 'label' => 'Statut',

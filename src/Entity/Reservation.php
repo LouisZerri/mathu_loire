@@ -18,19 +18,21 @@ class Reservation
     private ?int $id = null;
 
     #[ORM\Column(length: 20)]
+    #[Assert\Choice(choices: ['pending', 'validated', 'modified', 'cancelled'], message: 'Statut invalide.')]
     private ?string $status = null;
 
     #[ORM\Column]
     #[Assert\NotNull(message: 'Veuillez indiquer le nombre d\'adultes.')]
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Le nombre d\'adultes ne peut pas être négatif.')]
+    #[Assert\Range(min: 0, max: 20, notInRangeMessage: 'Doit être entre {{ min }} et {{ max }}.')]
     private ?int $nbAdults = null;
 
     #[ORM\Column]
     #[Assert\NotNull(message: 'Veuillez indiquer le nombre d\'enfants.')]
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Le nombre d\'enfants ne peut pas être négatif.')]
+    #[Assert\Range(min: 0, max: 20, notInRangeMessage: 'Doit être entre {{ min }} et {{ max }}.')]
     private ?int $nbChildren = null;
 
     #[ORM\Column]
+    #[Assert\Range(min: 0, max: 20, notInRangeMessage: 'Doit être entre {{ min }} et {{ max }}.')]
     private ?int $nbInvitations = null;
 
     #[ORM\Column]
@@ -82,13 +84,13 @@ class Reservation
     /**
      * @var Collection<int, SeatAssignment>
      */
-    #[ORM\OneToMany(targetEntity: SeatAssignment::class, mappedBy: 'reservation')]
+    #[ORM\OneToMany(targetEntity: SeatAssignment::class, mappedBy: 'reservation', cascade: ['remove'])]
     private Collection $seatAssignments;
 
     /**
      * @var Collection<int, Payment>
      */
-    #[ORM\OneToMany(targetEntity: Payment::class, mappedBy: 'reservation', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Payment::class, mappedBy: 'reservation', cascade: ['remove'], orphanRemoval: true)]
     private Collection $payments;
 
     #[ORM\Column(nullable: true)]
