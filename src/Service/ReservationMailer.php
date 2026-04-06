@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Reservation;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
@@ -12,7 +13,8 @@ class ReservationMailer
     public function __construct(
         private MailerInterface $mailer,
         private Environment $twig,
-        private TicketPdfGenerator $ticketPdfGenerator,
+        #[Autowire('%env(MAILER_FROM)%')]
+        private string $mailerFrom,
     ) {
     }
 
@@ -27,14 +29,11 @@ class ReservationMailer
             'total' => $total,
         ]);
 
-        $pdf = $this->ticketPdfGenerator->generate($reservation);
-
         $email = (new Email())
-            ->from('l.zerri@gmail.com')
+            ->from($this->mailerFrom)
             ->to($reservation->getSpectatorEmail())
             ->subject('Confirmation de réservation - ' . $representation->getShow()->getTitle())
-            ->html($html)
-            ->attach($pdf, sprintf('billet-%d.pdf', $reservation->getId()), 'application/pdf');
+            ->html($html);
 
         $this->mailer->send($email);
     }
@@ -51,7 +50,7 @@ class ReservationMailer
         ]);
 
         $email = (new Email())
-            ->from('l.zerri@gmail.com')
+            ->from($this->mailerFrom)
             ->to($reservation->getSpectatorEmail())
             ->subject('Annulation de réservation - ' . $representation->getShow()->getTitle())
             ->html($html);

@@ -54,12 +54,12 @@ class Reservation
 
     #[ORM\Column(length: 20)]
     #[Assert\NotBlank(message: 'Le téléphone est obligatoire.')]
-    #[Assert\Regex(pattern: '/^[\d\s\+\-\.()]{6,20}$/', message: 'Numéro de téléphone invalide.')]
+    #[Assert\Regex(pattern: '/^(?:(?:\+33|0)\s?[1-9])(?:[\s.\-]?\d{2}){4}$/', message: 'Numéro de téléphone invalide (ex: 06 12 34 56 78).')]
     private ?string $spectatorPhone = null;
 
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank(message: 'L\'email est obligatoire.')]
-    #[Assert\Email(message: 'L\'adresse email n\'est pas valide.')]
+    #[Assert\Email(mode: 'strict', message: 'L\'adresse email n\'est pas valide.')]
     private ?string $spectatorEmail = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]

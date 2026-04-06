@@ -1,0 +1,123 @@
+{% extends 'layouts/public.html.twig' %}
+
+{% block title %}Ma réservation #{{ reservation.id }} - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<section class="max-w-3xl mx-auto px-4 py-12">
+    <a href="{{ path('app_home') }}" class="text-sm text-gray-500 hover:text-gray-700 mb-6 inline-block">&larr; Retour à l'accueil</a>
+
+    {% for flash in app.flashes('error') %}
+        <div class="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">{{ flash }}</div>
+    {% endfor %}
+
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-lg font-semibold text-gray-900">Réservation n° {{ reservation.id }}</h1>
+                <p class="text-sm text-gray-500">Enregistrée le {{ reservation.createdAt|format_datetime(pattern='d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris') }}</p>
+            </div>
+            {% if reservation.status == 'validated' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Confirmée</span>
+            {% elseif reservation.status == 'pending' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">En attente de paiement</span>
+            {% elseif reservation.status == 'cancelled' %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Annulée</span>
+            {% endif %}
+        </div>
+
+        <div class="px-6 py-5 space-y-5">
+            <div class="grid sm:grid-cols-2 gap-5">
+                <div>
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">Spectacle</span>
+                    <p class="font-semibold text-gray-900 mt-1">{{ reservation.representation.show.title }}</p>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">Date</span>
+                    <p class="font-semibold text-gray-900 mt-1">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-5">
+                <table class="w-full text-sm">
+                    <tbody>
+                        {% if reservation.nbAdults > 0 %}
+                        <tr>
+                            <td class="py-1.5 text-gray-600">{{ reservation.nbAdults }} adulte{{ reservation.nbAdults > 1 ? 's' : '' }}</td>
+                            <td class="py-1.5 text-right font-medium text-gray-900">{{ (reservation.nbAdults * reservation.representation.adultPrice)|number_format(2, ',', ' ') }} €</td>
+                        </tr>
+                        {% endif %}
+                        {% if reservation.nbChildren > 0 %}
+                        <tr>
+                            <td class="py-1.5 text-gray-600">{{ reservation.nbChildren }} enfant{{ reservation.nbChildren > 1 ? 's' : '' }}</td>
+                            <td class="py-1.5 text-right font-medium text-gray-900">{{ (reservation.nbChildren * reservation.representation.childPrice)|number_format(2, ',', ' ') }} €</td>
+                        </tr>
+                        {% endif %}
+                        {% if reservation.nbInvitations > 0 %}
+                        <tr>
+                            <td class="py-1.5 text-gray-600">{{ reservation.nbInvitations }} invitation{{ reservation.nbInvitations > 1 ? 's' : '' }}</td>
+                            <td class="py-1.5 text-right text-gray-500">Gratuit</td>
+                        </tr>
+                        {% endif %}
+                        {% if reservation.isPMR %}
+                        <tr>
+                            <td class="py-1.5 text-gray-600" colspan="2">PMR : Oui</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="border-t border-gray-200">
+                            <td class="pt-3 font-semibold text-gray-900">Total</td>
+                            <td class="pt-3 text-right text-lg font-bold text-gray-900">{{ total|number_format(2, ',', ' ') }} €</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            {% set assignedSeats = [] %}
+            {% for sa in reservation.seatAssignments %}
+                {% if sa.status == 'assigned' %}
+                    {% set assignedSeats = assignedSeats|merge([sa.seat.row ~ sa.seat.number]) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if assignedSeats|length > 0 %}
+            <div class="border-t border-gray-100 pt-5">
+                <span class="text-xs text-gray-400 uppercase tracking-wide">Places assignées</span>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    {% for seat in assignedSeats %}
+                        <span class="inline-flex items-center px-3 py-1 rounded bg-gray-100 text-sm font-medium text-gray-900">{{ seat }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="border-t border-gray-100 pt-5">
+                <span class="text-xs text-gray-400 uppercase tracking-wide">Vos coordonnées</span>
+                <p class="font-medium text-gray-900 mt-1">{{ reservation.spectatorFirstName }} {{ reservation.spectatorLastName }}</p>
+                <p class="text-sm text-gray-500">{{ reservation.spectatorEmail }} · {{ reservation.spectatorPhone }}</p>
+                <p class="text-sm text-gray-500">{{ reservation.spectatorCity }}</p>
+            </div>
+        </div>
+
+        {% if reservation.status == 'validated' %}
+        {% set hoursUntilShow = ((reservation.representation.datetime.timestamp - date().timestamp) / 3600)|round(0, 'floor') %}
+        {% set canCancel = hoursUntilShow >= 48 %}
+
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">Présentez le n° <strong>{{ reservation.id }}</strong> au guichet le jour du spectacle.</p>
+
+            {% if canCancel %}
+                <form method="post" action="{{ path('app_reservation_self_cancel', { id: reservation.id, token: reservation.token }) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler votre réservation ? Cette action est irréversible.')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('self_cancel_' ~ reservation.id) }}">
+                    <button type="submit" class="text-sm text-red-600 hover:text-red-800">
+                        Annuler ma réservation
+                    </button>
+                </form>
+            {% else %}
+                <p class="text-xs text-gray-400">Annulation impossible moins de 48h avant le spectacle.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

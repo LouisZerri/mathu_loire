@@ -161,6 +161,30 @@ class AppFixtures extends Fixture
             $representations[] = $rep;
         }
 
+        // Représentation presque complète (max 10, on mettra 5 réservations de 1 place = 5 booked, reste 5)
+        $repAlmostFull = new Representation();
+        $repAlmostFull->setShow($show1);
+        $repAlmostFull->setDatetime(new \DateTime('2027-02-21 20:30'));
+        $repAlmostFull->setStatus('active');
+        $repAlmostFull->setMaxOnlineReservations(10);
+        $repAlmostFull->setVenueCapacity(175);
+        $repAlmostFull->setAdultPrice('9.00');
+        $repAlmostFull->setChildPrice('6.00');
+        $manager->persist($repAlmostFull);
+        $representations[] = $repAlmostFull;
+
+        // Représentation complète (max 5, on mettra 5 réservations de 1 place = 5 booked, reste 0)
+        $repFull = new Representation();
+        $repFull->setShow($show2);
+        $repFull->setDatetime(new \DateTime('2027-02-22 15:00'));
+        $repFull->setStatus('active');
+        $repFull->setMaxOnlineReservations(5);
+        $repFull->setVenueCapacity(175);
+        $repFull->setAdultPrice('9.00');
+        $repFull->setChildPrice('6.00');
+        $manager->persist($repFull);
+        $representations[] = $repFull;
+
         // Représentation annulée
         $repCancelled = new Representation();
         $repCancelled->setShow($show2);
@@ -301,6 +325,48 @@ class AppFixtures extends Fixture
         $resInvit->setCreatedAt(new \DateTimeImmutable('-15 days'));
         $resInvit->setCreatedBy($admin);
         $manager->persist($resInvit);
+
+        // === RÉSERVATIONS pour tester la jauge ===
+
+        // Représentation presque complète : 5 réservations de 1 adulte = 5/10, reste 5
+        for ($j = 0; $j < 5; $j++) {
+            $spec = $spectators[$j];
+            $res = new Reservation();
+            $res->setRepresentation($repAlmostFull);
+            $res->setStatus('validated');
+            $res->setNbAdults(1);
+            $res->setNbChildren(0);
+            $res->setNbInvitations(0);
+            $res->setIsPMR(false);
+            $res->setSpectatorLastName($spec[0]);
+            $res->setSpectatorFirstName($spec[1]);
+            $res->setSpectatorCity($spec[2]);
+            $res->setSpectatorPhone($spec[3]);
+            $res->setSpectatorEmail($spec[4]);
+            $res->setToken(bin2hex(random_bytes(32)));
+            $res->setCreatedAt(new \DateTimeImmutable('-' . (10 - $j) . ' days'));
+            $manager->persist($res);
+        }
+
+        // Représentation complète : 5 réservations de 1 adulte = 5/5, reste 0
+        for ($j = 0; $j < 5; $j++) {
+            $spec = $spectators[$j];
+            $res = new Reservation();
+            $res->setRepresentation($repFull);
+            $res->setStatus('validated');
+            $res->setNbAdults(1);
+            $res->setNbChildren(0);
+            $res->setNbInvitations(0);
+            $res->setIsPMR(false);
+            $res->setSpectatorLastName($spec[0]);
+            $res->setSpectatorFirstName($spec[1]);
+            $res->setSpectatorCity($spec[2]);
+            $res->setSpectatorPhone($spec[3]);
+            $res->setSpectatorEmail($spec[4]);
+            $res->setToken(bin2hex(random_bytes(32)));
+            $res->setCreatedAt(new \DateTimeImmutable('-' . (10 - $j) . ' days'));
+            $manager->persist($res);
+        }
 
         // === SEAT ASSIGNMENTS (placement sur la première représentation) ===
         $seatIndex = 0;

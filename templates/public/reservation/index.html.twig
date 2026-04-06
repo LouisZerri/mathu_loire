@@ -3,16 +3,67 @@
 {% block title %}Billetterie - Les Mathu'Loire{% endblock %}
 
 {% block body %}
-<section class="max-w-5xl mx-auto px-4 py-12">
+<section class="max-w-6xl mx-auto px-4 py-12">
     <h1 class="text-3xl font-semibold text-gray-900 mb-2">Billetterie</h1>
-    <p class="text-gray-500 mb-10">Choisissez une représentation pour réserver vos places.</p>
+    <p class="text-gray-500 mb-10">Choisissez un spectacle pour réserver vos places.</p>
 
-    {% if representations|length > 0 %}
-        <div class="space-y-3">
-            {% for representation in representations %}
-                {% include 'components/public/representation_card.html.twig' with { representation: representation } %}
+    {% if grouped|length > 0 %}
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for group in grouped %}
+                {% set show = group.show %}
+                {% set reps = group.representations %}
+                {% set nbDates = reps|length %}
+                {% set nextDate = reps|first %}
+                {% set allFull = reps|filter(r => not r.isFull)|length == 0 %}
+
+                <a href="{{ path('app_show_detail', { id: show.id }) }}" class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
+                    <div class="aspect-[2/3] overflow-hidden bg-gray-100">
+                        {% if show.imageName %}
+                            <img src="{{ asset('uploads/shows/' ~ show.imageName) }}"
+                                 alt="{{ show.title }}"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm">Pas d'affiche</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-4 flex-1 flex flex-col">
+                        <h2 class="font-semibold text-gray-900 group-hover:underline">{{ show.title }}</h2>
+                        {% if show.author %}
+                            <p class="text-xs text-gray-500 mt-0.5">De {{ show.author }}</p>
+                        {% endif %}
+
+                        <div class="mt-auto pt-3 flex items-center justify-between text-xs">
+                            <span class="text-gray-500">
+                                {{ nbDates }} date{{ nbDates > 1 ? 's' : '' }} · à partir de {{ nextDate.entity.adultPrice }} €
+                            </span>
+                            {% if allFull %}
+                                <span class="text-red-600 font-medium">Complet</span>
+                            {% else %}
+                                <span class="text-gray-900 font-medium group-hover:translate-x-1 transition-transform">Réserver &rarr;</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
             {% endfor %}
         </div>
+
+        {% if totalPages > 1 %}
+        <div class="flex items-center justify-center gap-2 mt-10">
+            {% if currentPage > 1 %}
+                <a href="{{ path('app_reservation_index', { page: currentPage - 1 }) }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Précédent</a>
+            {% endif %}
+
+            {% for p in 1..totalPages %}
+                <a href="{{ path('app_reservation_index', { page: p }) }}"
+                   class="px-4 py-2 rounded-lg text-sm {{ p == currentPage ? 'bg-gray-900 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50' }}">{{ p }}</a>
+            {% endfor %}
+
+            {% if currentPage < totalPages %}
+                <a href="{{ path('app_reservation_index', { page: currentPage + 1 }) }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Suivant</a>
+            {% endif %}
+        </div>
+        {% endif %}
     {% else %}
         <div class="text-center py-16 text-gray-500">
             <p class="text-lg">Aucune représentation disponible pour le moment.</p>

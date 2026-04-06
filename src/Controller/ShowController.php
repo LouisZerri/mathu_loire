@@ -24,9 +24,22 @@ class ShowController extends AbstractController
             ->getQuery()
             ->getResult();
 
+        $bookedMap = $representationRepository->findBookedPlacesMap();
+
+        $repsWithJauge = [];
+        foreach ($representations as $rep) {
+            $booked = $bookedMap[$rep->getId()] ?? 0;
+            $repsWithJauge[] = [
+                'entity' => $rep,
+                'booked' => $booked,
+                'remaining' => $rep->getMaxOnlineReservations() - $booked,
+                'isFull' => $booked >= $rep->getMaxOnlineReservations(),
+            ];
+        }
+
         return $this->render('public/show/detail.html.twig', [
             'show' => $show,
-            'representations' => $representations,
+            'representations' => $repsWithJauge,
         ]);
     }
 }

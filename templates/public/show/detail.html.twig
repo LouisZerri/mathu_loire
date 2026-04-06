@@ -76,18 +76,32 @@
                         <th class="px-4 py-3">Heure</th>
                         <th class="px-4 py-3">Tarif adulte</th>
                         <th class="px-4 py-3">Tarif enfant</th>
+                        <th class="px-4 py-3 text-center">Disponibilité</th>
                         <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for rep in representations %}
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium text-gray-900">{{ rep.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ rep.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ rep.adultPrice|number_format(2, ',', ' ') }} €</td>
-                        <td class="px-4 py-3 text-gray-600">{{ rep.childPrice|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 font-medium text-gray-900">{{ rep.entity.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ rep.entity.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ rep.entity.adultPrice|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 text-gray-600">{{ rep.entity.childPrice|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 text-center">
+                            {% if rep.isFull %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Complet</span>
+                            {% elseif rep.remaining <= 20 %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{{ rep.remaining }} places</span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Disponible</span>
+                            {% endif %}
+                        </td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ path('app_reservation_new', { id: rep.id }) }}" class="inline-block bg-gray-900 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-gray-800 transition-colors">Réserver</a>
+                            {% if rep.isFull %}
+                                <span class="text-sm text-gray-400">Complet</span>
+                            {% else %}
+                                <a href="{{ path('app_reservation_new', { id: rep.entity.id }) }}" class="inline-block bg-gray-900 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-gray-800 transition-colors">Réserver</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

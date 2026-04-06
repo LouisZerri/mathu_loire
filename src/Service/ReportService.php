@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
@@ -17,6 +18,8 @@ class ReportService
         private Environment $twig,
         private DashboardService $dashboardService,
         private SeatPlanPdfGenerator $seatPlanPdfGenerator,
+        #[Autowire('%env(MAILER_FROM)%')]
+        private string $mailerFrom,
     ) {
     }
 
@@ -50,7 +53,7 @@ class ReportService
         $sent = 0;
         foreach ($recipientEmails as $recipient) {
             $email = (new Email())
-                ->from('l.zerri@gmail.com')
+                ->from($this->mailerFrom)
                 ->to($recipient)
                 ->subject('Rapport journalier - Les Mathu\'Loire - ' . (new \DateTime())->format('d/m/Y'))
                 ->html($html);

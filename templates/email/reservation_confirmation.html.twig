@@ -73,7 +73,8 @@
             </div>
 
             <div class="note">
-                Votre billet est joint à cet email en pièce jointe (PDF). Merci de le présenter à l'entrée (imprimé ou sur smartphone).
+                Présentez votre numéro de réservation <strong>n° {{ reservation.id }}</strong> au guichet le jour du spectacle. La billetterie ouvre 45 minutes avant le début de la représentation.<br><br>
+                <a href="{{ url('app_reservation_tracking', { id: reservation.id, token: reservation.token }) }}" style="color: #8b4572; text-decoration: underline;">Consulter ma réservation en ligne</a>
             </div>
         </div>
 
