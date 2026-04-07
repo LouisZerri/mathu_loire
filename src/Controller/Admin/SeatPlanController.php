@@ -17,15 +17,20 @@ use Symfony\Component\Routing\Attribute\Route;
 class SeatPlanController extends AbstractController
 {
     #[Route('/', name: 'app_admin_seatplan')]
-    public function index(RepresentationRepository $representationRepository): Response
+    public function index(Request $request, RepresentationRepository $representationRepository): Response
     {
         $representations = $representationRepository->findBy(
             ['status' => 'active'],
             ['datetime' => 'ASC']
         );
 
+        $preselectedRepresentationId = (int) $request->query->get('representation', 0) ?: null;
+        $preselectedReservationId = (int) $request->query->get('reservation', 0) ?: null;
+
         return $this->render('admin/seatplan/index.html.twig', [
             'representations' => $representations,
+            'preselectedRepresentationId' => $preselectedRepresentationId,
+            'preselectedReservationId' => $preselectedReservationId,
         ]);
     }
 
@@ -155,6 +160,47 @@ class SeatPlanController extends AbstractController
             $assignment->setStatus('assigned');
             $em->persist($assignment);
         }
+
+        $em->flush();
+
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('/api/swap', name: 'app_admin_seatplan_api_swap', methods: ['POST'])]
+    public function swapSeats(
+        Request $request,
+        SeatRepository $seatRepository,
+        RepresentationRepository $representationRepository,
+        EntityManagerInterface $em,
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        $seatA = $seatRepository->find($data['seatAId'] ?? 0);
+        $seatB = $seatRepository->find($data['seatBId'] ?? 0);
+        $representation = $representationRepository->find($data['representationId'] ?? 0);
+
+        if (!$seatA || !$seatB || !$representation) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
+
+        $assignA = $em->getRepository(SeatAssignment::class)->findOneBy([
+            'seat' => $seatA,
+            'representation' => $representation,
+        ]);
+        $assignB = $em->getRepository(SeatAssignment::class)->findOneBy([
+            'seat' => $seatB,
+            'representation' => $representation,
+        ]);
+
+        if (!$assignA || !$assignB || $assignA->getStatus() !== 'assigned' || $assignB->getStatus() !== 'assigned') {
+            return $this->json(['error' => 'Les deux sièges doivent être assignés'], 400);
+        }
+
+        $reservationA = $assignA->getReservation();
+        $reservationB = $assignB->getReservation();
+
+        $assignA->setReservation($reservationB);
+        $assignB->setReservation($reservationA);
 
         $em->flush();
 

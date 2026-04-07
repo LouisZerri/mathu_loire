@@ -20,7 +20,7 @@ export default function ReservationList({ reservations, selectedReservation, onS
                             onClick={() => onSelect(null)}
                             className="text-xs text-blue-600 hover:text-blue-800"
                         >
-                            Annuler
+                            Désélectionner
                         </button>
                     </div>
                     <div className="text-xs text-blue-600 mt-0.5">

@@ -25,7 +25,9 @@ class AdminReservationType extends AbstractType
             ->add('representation', EntityType::class, [
                 'class' => Representation::class,
                 'choice_label' => function (Representation $rep) {
-                    return $rep->getShow()->getTitle() . ' — ' . $rep->getDatetime()->format('d/m/Y H:i');
+                    $dt = \DateTime::createFromInterface($rep->getDatetime());
+                    $dt->setTimezone(new \DateTimeZone('Europe/Paris'));
+                    return $rep->getShow()->getTitle() . ' — ' . $dt->format('d/m/Y H:i');
                 },
                 'label' => 'Représentation',
                 'query_builder' => function (EntityRepository $er) {
@@ -46,14 +48,20 @@ class AdminReservationType extends AbstractType
             ])
             ->add('nbAdults', IntegerType::class, [
                 'label' => 'Adultes',
+                'required' => false,
+                'empty_data' => '0',
                 'attr' => ['min' => 0],
             ])
             ->add('nbChildren', IntegerType::class, [
                 'label' => 'Enfants',
+                'required' => false,
+                'empty_data' => '0',
                 'attr' => ['min' => 0],
             ])
             ->add('nbInvitations', IntegerType::class, [
                 'label' => 'Invitations',
+                'required' => false,
+                'empty_data' => '0',
                 'attr' => ['min' => 0],
             ])
             ->add('isPMR', CheckboxType::class, [

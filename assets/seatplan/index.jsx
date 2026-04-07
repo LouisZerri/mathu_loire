@@ -5,7 +5,10 @@ import SeatPlanApp from './components/SeatPlanApp';
 function App() {
     const container = document.getElementById('seatplan-root');
     const representations = JSON.parse(container.dataset.representations || '[]');
-    const [representationId, setRepresentationId] = useState('');
+    const preselectedRep = container.dataset.preselectedRepresentation || '';
+    const preselectedResa = container.dataset.preselectedReservation || '';
+
+    const [representationId, setRepresentationId] = useState(preselectedRep);
 
     return (
         <>
@@ -23,7 +26,7 @@ function App() {
                 </select>
             </div>
 
-            {representationId && <SeatPlanApp representationId={representationId} />}
+            {representationId && <SeatPlanApp representationId={representationId} preselectedReservationId={preselectedResa} />}
             {!representationId && <p className="text-gray-500 text-sm">Sélectionnez une représentation pour afficher le plan de salle.</p>}
         </>
     );

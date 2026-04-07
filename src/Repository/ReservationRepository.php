@@ -40,7 +40,7 @@ class ReservationRepository extends ServiceEntityRepository
         return $qb->getQuery()->getSingleResult();
     }
 
-    public function findByFilters(?Representation $representation = null, ?string $status = null, int $page = 1, int $limit = 20, ?int $year = null): array
+    public function findByFilters(?Representation $representation = null, ?string $status = null, int $page = 1, int $limit = 20, ?int $year = null, ?string $search = null): array
     {
         $qb = $this->createQueryBuilder('r')
             ->join('r.representation', 'rep')
@@ -64,13 +64,19 @@ class ReservationRepository extends ServiceEntityRepository
                ->setParameter('end', new \DateTime(($year + 1) . '-01-01'));
         }
 
+        if ($search) {
+            $qb->andWhere('r.spectatorLastName LIKE :search OR r.spectatorFirstName LIKE :search OR r.spectatorEmail LIKE :search OR r.spectatorPhone LIKE :search OR r.id = :searchId')
+               ->setParameter('search', '%' . $search . '%')
+               ->setParameter('searchId', (int) $search);
+        }
+
         $qb->setFirstResult(($page - 1) * $limit)
            ->setMaxResults($limit);
 
         return $qb->getQuery()->getResult();
     }
 
-    public function countByFilters(?Representation $representation = null, ?string $status = null, ?int $year = null): int
+    public function countByFilters(?Representation $representation = null, ?string $status = null, ?int $year = null, ?string $search = null): int
     {
         $qb = $this->createQueryBuilder('r')
             ->select('COUNT(r.id)')
@@ -90,6 +96,12 @@ class ReservationRepository extends ServiceEntityRepository
             $qb->andWhere('rep.datetime >= :start AND rep.datetime < :end')
                ->setParameter('start', new \DateTime($year . '-01-01'))
                ->setParameter('end', new \DateTime(($year + 1) . '-01-01'));
+        }
+
+        if ($search) {
+            $qb->andWhere('r.spectatorLastName LIKE :search OR r.spectatorFirstName LIKE :search OR r.spectatorEmail LIKE :search OR r.spectatorPhone LIKE :search OR r.id = :searchId')
+               ->setParameter('search', '%' . $search . '%')
+               ->setParameter('searchId', (int) $search);
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();

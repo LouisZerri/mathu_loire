@@ -10,6 +10,7 @@ use App\Service\HelloAssoPaymentHandler;
 use App\Service\ReservationMailer;
 use App\Service\ReservationService;
 use App\Service\TicketThermalPdfGenerator;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,6 +27,7 @@ class ReservationController extends AbstractController
     ): Response {
         $repId = (int) $request->query->get('representation', 0);
         $status = $request->query->get('status', '');
+        $search = trim((string) $request->query->get('search', ''));
         $page = max(1, (int) $request->query->get('page', 1));
 
         $availableYears = $representationRepository->findAvailableYears();
@@ -42,20 +44,25 @@ class ReservationController extends AbstractController
 
         $representation = $repId ? $representationRepository->find($repId) : null;
         $statusFilter = $status ?: null;
+        $searchFilter = $search !== '' ? $search : null;
 
-        $reservations = $reservationRepository->findByFilters($representation, $statusFilter, $page, 20, $selectedYear);
-        $totalReservations = $reservationRepository->countByFilters($representation, $statusFilter, $selectedYear);
+        // Si recherche, on ignore le filtre année pour chercher sur toute l'histoire
+        $yearFilter = $searchFilter ? null : $selectedYear;
+
+        $reservations = $reservationRepository->findByFilters($representation, $statusFilter, $page, 20, $yearFilter, $searchFilter);
+        $totalReservations = $reservationRepository->countByFilters($representation, $statusFilter, $yearFilter, $searchFilter);
         $totalPages = max(1, (int) ceil($totalReservations / 20));
 
         $representations = $representationRepository->findByYear($selectedYear);
 
-        $cancelledReservations = $reservationRepository->findByFilters(null, 'cancelled', 1, 50, $selectedYear);
+        $cancelledReservations = $searchFilter ? [] : $reservationRepository->findByFilters(null, 'cancelled', 1, 50, $selectedYear);
 
         return $this->render('admin/reservation/index.html.twig', [
             'reservations' => $reservations,
             'representations' => $representations,
             'currentRep' => $representation,
             'currentStatus' => $statusFilter,
+            'currentSearch' => $searchFilter,
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'totalResults' => $totalReservations,
@@ -65,18 +72,60 @@ class ReservationController extends AbstractController
         ]);
     }
 
+    #[Route('/new', name: 'app_admin_reservation_new')]
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+    ): Response {
+        $reservation = new Reservation();
+        $form = $this->createForm(AdminReservationType::class, $reservation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $totalPlaces = $reservation->getNbAdults() + $reservation->getNbChildren() + $reservation->getNbInvitations();
+
+            if ($totalPlaces === 0) {
+                $this->addFlash('error', 'Veuillez saisir au moins une place.');
+            } else {
+                $reservation->setStatus('validated');
+                $reservation->setCreatedBy($this->getUser());
+                $reservation->setToken(bin2hex(random_bytes(32)));
+                $reservation->setCreatedAt(new \DateTimeImmutable());
+
+                $em->persist($reservation);
+                $em->flush();
+
+                $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' créée.');
+
+                return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
+            }
+        }
+
+        return $this->render('admin/reservation/new.html.twig', [
+            'reservation' => $reservation,
+            'form' => $form,
+        ]);
+    }
+
     #[Route('/{id}/edit', name: 'app_admin_reservation_edit', requirements: ['id' => '\d+'])]
     public function edit(
         Reservation $reservation,
         Request $request,
         ReservationService $reservationService,
     ): Response {
+        $previousStatus = $reservation->getStatus();
         $form = $this->createForm(AdminReservationType::class, $reservation);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $reservation->setUpdatedAt(new \DateTimeImmutable());
-            $reservationService->save();
+
+            // Si le statut passe à cancelled, libérer les sièges via le service
+            if ($previousStatus !== 'cancelled' && $reservation->getStatus() === 'cancelled') {
+                $reservationService->cancel($reservation);
+            } else {
+                $reservationService->save();
+            }
 
             $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' mise à jour.');
 
@@ -101,6 +150,20 @@ class ReservationController extends AbstractController
         if ($this->isCsrfTokenValid('resend_email_' . $reservation->getId(), $request->request->get('_token'))) {
             $mailer->sendConfirmation($reservation);
             $this->addFlash('success', 'Email de confirmation renvoyé à ' . $reservation->getSpectatorEmail() . '.');
+        }
+
+        return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/{id}/cancel', name: 'app_admin_reservation_cancel', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function cancel(
+        Reservation $reservation,
+        Request $request,
+        ReservationService $reservationService,
+    ): Response {
+        if ($this->isCsrfTokenValid('cancel_' . $reservation->getId(), $request->request->get('_token'))) {
+            $reservationService->cancel($reservation);
+            $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' annulée.');
         }
 
         return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);

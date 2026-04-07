@@ -25,13 +25,14 @@ const SEAT_MAP = {
 
 const ROWS = ['R', 'P', 'O', 'N', 'M', 'L', 'K', 'J', 'I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
 
-export default function SeatPlanApp({ representationId }) {
+export default function SeatPlanApp({ representationId, preselectedReservationId }) {
     const [seats, setSeats] = useState([]);
     const [reservations, setReservations] = useState([]);
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
+    const [swapSource, setSwapSource] = useState(null);
 
     const fetchData = useCallback(async () => {
         if (!representationId) return;
@@ -49,6 +50,16 @@ export default function SeatPlanApp({ representationId }) {
         fetchData();
     }, [fetchData]);
 
+    // Pré-sélectionner une réservation si fournie en paramètre URL
+    useEffect(() => {
+        if (preselectedReservationId && reservations.length > 0) {
+            const found = reservations.find(r => String(r.id) === String(preselectedReservationId));
+            if (found) {
+                setSelectedReservation(found);
+            }
+        }
+    }, [preselectedReservationId, reservations]);
+
     const showMessage = (text, type = 'success') => {
         setMessage({ text, type });
         setTimeout(() => setMessage(null), 3000);
@@ -60,6 +71,16 @@ export default function SeatPlanApp({ representationId }) {
     };
 
     const closeContextMenu = () => setContextMenu(null);
+
+    const startSwap = (seat) => {
+        setSwapSource(seat);
+        closeContextMenu();
+        showMessage(`Sélectionnez un siège à échanger avec ${seat.row}${seat.number}`);
+    };
+
+    const cancelSwap = () => {
+        setSwapSource(null);
+    };
 
     const toggleBroken = async (seat) => {
         if (seat.status === 'assigned') {
@@ -79,6 +100,31 @@ export default function SeatPlanApp({ representationId }) {
     };
 
     const handleSeatClick = async (seat) => {
+        // Mode échange : si une source est sélectionnée, traiter comme cible
+        if (swapSource) {
+            if (swapSource.id === seat.id) {
+                setSwapSource(null);
+                return;
+            }
+            if (seat.status !== 'assigned') {
+                showMessage('Vous devez sélectionner un siège assigné à une autre personne.', 'error');
+                return;
+            }
+            await fetch('/admin/plan-de-salle/api/swap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    seatAId: swapSource.id,
+                    seatBId: seat.id,
+                    representationId,
+                }),
+            });
+            showMessage(`Sièges ${swapSource.row}${swapSource.number} ↔ ${seat.row}${seat.number} échangés`);
+            setSwapSource(null);
+            fetchData();
+            return;
+        }
+
         if (seat.status === 'broken') return;
 
         if (seat.status === 'assigned' && !selectedReservation) {
@@ -106,6 +152,35 @@ export default function SeatPlanApp({ representationId }) {
         }
 
         if (selectedReservation && (seat.status === 'available' || seat.status === 'assigned')) {
+            // Si le siège est déjà assigné à la réservation sélectionnée, le libérer
+            if (seat.status === 'assigned' && seat.reservationId === selectedReservation.id) {
+                if (confirm(`Libérer le siège ${seat.row}${seat.number} ?`)) {
+                    await fetch('/admin/plan-de-salle/api/unassign', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ seatId: seat.id, representationId }),
+                    });
+                    showMessage(`Siège ${seat.row}${seat.number} libéré`);
+                    fetchData();
+                }
+                return;
+            }
+
+            // Empêcher de placer plus de sièges que le nombre de places réservées
+            if (selectedReservation.assignedCount >= selectedReservation.totalPlaces) {
+                showMessage(`Toutes les places de cette réservation sont déjà placées (${selectedReservation.assignedCount}/${selectedReservation.totalPlaces}).`, 'error');
+                return;
+            }
+
+            // Si le siège est déjà assigné à quelqu'un d'autre, demander confirmation
+            let previousReservationId = null;
+            if (seat.status === 'assigned' && seat.reservationId !== selectedReservation.id) {
+                if (!confirm(`Le siège ${seat.row}${seat.number} est déjà assigné à ${seat.spectatorName}. Voulez-vous le réassigner à ${selectedReservation.spectatorName} ?`)) {
+                    return;
+                }
+                previousReservationId = seat.reservationId;
+            }
+
             await fetch('/admin/plan-de-salle/api/assign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -116,7 +191,21 @@ export default function SeatPlanApp({ representationId }) {
                 }),
             });
             showMessage(`Siège ${seat.row}${seat.number} → ${selectedReservation.spectatorName}`);
-            fetchData();
+
+            // Si on a déplacé le siège d'une autre réservation, basculer sur elle pour la replacer
+            if (previousReservationId) {
+                await fetchData();
+                const updated = await fetch(`/admin/plan-de-salle/api/reservations/${representationId}`);
+                const updatedReservations = await updated.json();
+                const previous = updatedReservations.find(r => r.id === previousReservationId);
+                if (previous && confirm(`Le déplacement est effectué. Replacer maintenant ${previous.spectatorName} (${previous.assignedCount}/${previous.totalPlaces} placé) ?`)) {
+                    setSelectedReservation(previous);
+                } else {
+                    fetchData();
+                }
+            } else {
+                fetchData();
+            }
             return;
         }
 
@@ -148,6 +237,13 @@ export default function SeatPlanApp({ representationId }) {
                     </div>
                 )}
 
+                {swapSource && (
+                    <div className="mb-4 px-4 py-2 rounded-lg text-sm w-full max-w-md bg-blue-50 text-blue-800 border border-blue-200 flex items-center justify-between">
+                        <span>Échange en cours — cliquez sur un autre siège assigné</span>
+                        <button onClick={cancelSwap} className="text-xs text-blue-600 hover:text-blue-800 ml-2">Annuler</button>
+                    </div>
+                )}
+
                 <div className="w-full overflow-x-auto">
                     <SeatGrid
                         seats={seats}
@@ -169,6 +265,14 @@ export default function SeatPlanApp({ representationId }) {
                             <div className="px-3 py-2 border-b border-gray-100">
                                 <div className="text-xs text-gray-400">Siège {contextMenu.seat.row}{contextMenu.seat.number}</div>
                             </div>
+                            {contextMenu.seat.status === 'assigned' && (
+                                <button
+                                    onClick={() => startSwap(contextMenu.seat)}
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    Échanger avec un autre siège
+                                </button>
+                            )}
                             {contextMenu.seat.status !== 'broken' && contextMenu.seat.status !== 'assigned' && (
                                 <button
                                     onClick={() => toggleBroken(contextMenu.seat)}

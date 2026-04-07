@@ -41,6 +41,14 @@ class ReservationService
     {
         $reservation->setStatus('cancelled');
         $reservation->setUpdatedAt(new \DateTimeImmutable());
+
+        // Libérer tous les sièges assignés à cette réservation
+        foreach ($reservation->getSeatAssignments() as $assignment) {
+            if ($assignment->getStatus() === 'assigned') {
+                $this->em->remove($assignment);
+            }
+        }
+
         $this->em->flush();
     }
 

@@ -75,6 +75,11 @@
     <h3 class="text-sm font-semibold text-gray-900 mb-4">Actions</h3>
 
     <div class="space-y-2">
+        <a href="{{ path('app_admin_seatplan', { representation: reservation.representation.id, reservation: reservation.id }) }}"
+           class="block w-full px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors text-center">
+            Placer dans le plan de salle
+        </a>
+
         <form method="post" action="{{ path('app_admin_reservation_resend_email', { id: reservation.id }) }}">
             <input type="hidden" name="_token" value="{{ csrf_token('resend_email_' ~ reservation.id) }}">
             <button type="submit" class="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
@@ -87,13 +92,22 @@
             Imprimer les billets (80mm)
         </a>
 
-        {% if reservation.status == 'validated' and reservation.payments|length > 0 %}
-        <form method="post" action="{{ path('app_admin_reservation_refund', { id: reservation.id }) }}" onsubmit="return confirm('Annuler cette réservation et rembourser le spectateur ? Cette action est irréversible.')">
-            <input type="hidden" name="_token" value="{{ csrf_token('refund_' ~ reservation.id) }}">
-            <button type="submit" class="w-full px-4 py-2 bg-red-50 border border-red-200 text-sm rounded-lg text-red-700 hover:bg-red-100 transition-colors">
-                Annuler et rembourser
-            </button>
-        </form>
+        {% if reservation.status != 'cancelled' %}
+            {% if reservation.payments|length > 0 %}
+            <form method="post" action="{{ path('app_admin_reservation_refund', { id: reservation.id }) }}" onsubmit="return confirm('Annuler cette réservation et rembourser le spectateur ? Cette action est irréversible.')">
+                <input type="hidden" name="_token" value="{{ csrf_token('refund_' ~ reservation.id) }}">
+                <button type="submit" class="w-full px-4 py-2 bg-red-50 border border-red-200 text-sm rounded-lg text-red-700 hover:bg-red-100 transition-colors">
+                    Annuler et rembourser
+                </button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ path('app_admin_reservation_cancel', { id: reservation.id }) }}" onsubmit="return confirm('Annuler cette réservation ? Cette action est irréversible.')">
+                <input type="hidden" name="_token" value="{{ csrf_token('cancel_' ~ reservation.id) }}">
+                <button type="submit" class="w-full px-4 py-2 bg-red-50 border border-red-200 text-sm rounded-lg text-red-700 hover:bg-red-100 transition-colors">
+                    Annuler la réservation
+                </button>
+            </form>
+            {% endif %}
         {% endif %}
     </div>
 </div>

@@ -73,11 +73,11 @@
         </div>
         <div class="flex gap-2">
             {% if currentPage > 1 %}
-                <a href="{{ path('app_admin_reservation_index', { representation: currentRep ? currentRep.id : '', status: currentStatus, year: selectedYear|default(''), page: currentPage - 1 }) }}"
+                <a href="{{ path('app_admin_reservation_index', { representation: currentRep ? currentRep.id : '', status: currentStatus, search: currentSearch|default(''), year: selectedYear|default(''), page: currentPage - 1 }) }}"
                    class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Précédent</a>
             {% endif %}
             {% if currentPage < totalPages %}
-                <a href="{{ path('app_admin_reservation_index', { representation: currentRep ? currentRep.id : '', status: currentStatus, year: selectedYear|default(''), page: currentPage + 1 }) }}"
+                <a href="{{ path('app_admin_reservation_index', { representation: currentRep ? currentRep.id : '', status: currentStatus, search: currentSearch|default(''), year: selectedYear|default(''), page: currentPage + 1 }) }}"
                    class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Suivant</a>
             {% endif %}
         </div>
