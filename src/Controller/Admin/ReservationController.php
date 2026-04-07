@@ -72,6 +72,56 @@ class ReservationController extends AbstractController
         ]);
     }
 
+    #[Route('/export', name: 'app_admin_reservation_export')]
+    public function export(
+        Request $request,
+        ReservationRepository $reservationRepository,
+        RepresentationRepository $representationRepository,
+    ): Response {
+        $repId = (int) $request->query->get('representation', 0);
+        $status = $request->query->get('status', '');
+        $search = trim((string) $request->query->get('search', ''));
+        $year = (int) $request->query->get('year', 0) ?: null;
+
+        $representation = $repId ? $representationRepository->find($repId) : null;
+        $statusFilter = $status ?: null;
+        $searchFilter = $search !== '' ? $search : null;
+        $yearFilter = $searchFilter ? null : $year;
+
+        $reservations = $reservationRepository->findByFilters($representation, $statusFilter, 1, 10000, $yearFilter, $searchFilter);
+
+        $csv = "N°;Statut;Nom;Prénom;Ville;Téléphone;Email;Spectacle;Date;Adultes;Enfants;Invitations;PMR;Total;Enregistrée le\n";
+
+        foreach ($reservations as $r) {
+            $rep = $r->getRepresentation();
+            $total = ($r->getNbAdults() * (float) $rep->getAdultPrice()) + ($r->getNbChildren() * (float) $rep->getChildPrice());
+
+            $csv .= sprintf(
+                "%d;%s;%s;%s;%s;%s;%s;%s;%s;%d;%d;%d;%s;%s;%s\n",
+                $r->getId(),
+                $r->getStatus(),
+                str_replace(';', ',', $r->getSpectatorLastName()),
+                str_replace(';', ',', $r->getSpectatorFirstName()),
+                str_replace(';', ',', $r->getSpectatorCity()),
+                $r->getSpectatorPhone(),
+                $r->getSpectatorEmail(),
+                str_replace(';', ',', $rep->getShow()->getTitle()),
+                $rep->getDatetime()->format('d/m/Y H:i'),
+                $r->getNbAdults(),
+                $r->getNbChildren(),
+                $r->getNbInvitations(),
+                $r->isPMR() ? 'Oui' : 'Non',
+                number_format($total, 2, '.', ''),
+                $r->getCreatedAt()->format('d/m/Y H:i'),
+            );
+        }
+
+        return new Response("\xEF\xBB\xBF" . $csv, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="reservations-' . date('Y-m-d') . '.csv"',
+        ]);
+    }
+
     #[Route('/new', name: 'app_admin_reservation_new')]
     public function new(
         Request $request,

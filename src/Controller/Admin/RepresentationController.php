@@ -53,9 +53,25 @@ class RepresentationController extends AbstractController
     }
 
     #[Route('/new', name: 'app_admin_representation_new')]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(Request $request, EntityManagerInterface $em, RepresentationRepository $representationRepository): Response
     {
         $representation = new Representation();
+
+        $duplicateFrom = (int) $request->query->get('duplicate_from', 0);
+        if ($duplicateFrom) {
+            $source = $representationRepository->find($duplicateFrom);
+            if ($source) {
+                $representation->setShow($source->getShow());
+                $representation->setDatetime((clone $source->getDatetime())->modify('+7 days'));
+                $representation->setStatus('active');
+                $representation->setMaxOnlineReservations($source->getMaxOnlineReservations());
+                $representation->setVenueCapacity($source->getVenueCapacity());
+                $representation->setAdultPrice($source->getAdultPrice());
+                $representation->setChildPrice($source->getChildPrice());
+                $representation->setGroupPrice($source->getGroupPrice());
+            }
+        }
+
         $form = $this->createForm(RepresentationType::class, $representation);
         $form->handleRequest($request);
 
@@ -106,6 +122,18 @@ class RepresentationController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_representation_index');
+    }
+
+    #[Route('/{id}/duplicate', name: 'app_admin_representation_duplicate', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function duplicate(Representation $representation, Request $request, EntityManagerInterface $em): Response
+    {
+        if (!$this->isCsrfTokenValid('duplicate_rep_' . $representation->getId(), $request->request->get('_token'))) {
+            return $this->redirectToRoute('app_admin_representation_index');
+        }
+
+        return $this->redirectToRoute('app_admin_representation_new', [
+            'duplicate_from' => $representation->getId(),
+        ]);
     }
 
     #[Route('/{id}/releve', name: 'app_admin_representation_report', requirements: ['id' => '\d+'])]
