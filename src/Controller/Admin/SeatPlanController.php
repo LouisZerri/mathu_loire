@@ -227,4 +227,24 @@ class SeatPlanController extends AbstractController
 
         return $this->json(['success' => true]);
     }
+
+    #[Route('/api/toggle-broken', name: 'app_admin_seatplan_api_toggle_broken', methods: ['POST'])]
+    public function toggleBroken(
+        Request $request,
+        SeatRepository $seatRepository,
+        EntityManagerInterface $em,
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        $seat = $seatRepository->find($data['seatId'] ?? 0);
+
+        if (!$seat) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
+
+        $seat->setIsActive(!$seat->isActive());
+        $em->flush();
+
+        return $this->json(['success' => true, 'isActive' => $seat->isActive()]);
+    }
 }

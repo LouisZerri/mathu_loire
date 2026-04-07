@@ -9,13 +9,16 @@ const items = [
 
 export default function SeatLegend() {
     return (
-        <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-gray-100">
-            {items.map(item => (
-                <div key={item.label} className="flex items-center gap-1.5">
-                    <div className={`w-4 h-4 rounded-sm border ${item.color}`} />
-                    <span className="text-xs text-gray-500">{item.label}</span>
-                </div>
-            ))}
+        <div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Légende</h3>
+            <div className="grid grid-cols-2 gap-2">
+                {items.map(item => (
+                    <div key={item.label} className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded-sm border ${item.color}`} />
+                        <span className="text-xs text-gray-600">{item.label}</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

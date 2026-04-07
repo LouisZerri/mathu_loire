@@ -34,6 +34,51 @@ class RepresentationRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return int[]
+     */
+    public function findAvailableYears(): array
+    {
+        $results = $this->createQueryBuilder('r')
+            ->select('r.datetime')
+            ->orderBy('r.datetime', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        $years = [];
+        foreach ($results as $r) {
+            $year = (int) $r['datetime']->format('Y');
+            $years[$year] = true;
+        }
+
+        return array_keys($years);
+    }
+
+    /**
+     * @return Representation[]
+     */
+    public function findByYear(int $year, ?string $status = null): array
+    {
+        $start = new \DateTime($year . '-01-01 00:00:00');
+        $end = new \DateTime(($year + 1) . '-01-01 00:00:00');
+
+        $qb = $this->createQueryBuilder('r')
+            ->join('r.show', 's')
+            ->addSelect('s')
+            ->where('r.datetime >= :start')
+            ->andWhere('r.datetime < :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('r.datetime', 'ASC');
+
+        if ($status) {
+            $qb->andWhere('r.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * @return array<int, int> [representationId => totalBookedPlaces]
      */
     public function findBookedPlacesMap(): array

@@ -2,20 +2,18 @@
 
 namespace App\Service;
 
-use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
 
 class DashboardService
 {
     public function __construct(
         private ReservationRepository $reservationRepository,
-        private RepresentationRepository $representationRepository,
     ) {
     }
 
-    public function getSeasonStats(): array
+    public function getSeasonStats(?int $year = null): array
     {
-        $stats = $this->reservationRepository->findSeasonStats();
+        $stats = $this->reservationRepository->findSeasonStats($year);
 
         $totalAdults = (int) ($stats['totalAdults'] ?? 0);
         $totalChildren = (int) ($stats['totalChildren'] ?? 0);
@@ -32,9 +30,9 @@ class DashboardService
         ];
     }
 
-    public function getRepresentationStats(): array
+    public function getRepresentationStats(?int $year = null): array
     {
-        $raw = $this->reservationRepository->findRepresentationStats();
+        $raw = $this->reservationRepository->findRepresentationStats($year);
         $stats = [];
 
         foreach ($raw as $row) {

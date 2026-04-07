@@ -13,8 +13,14 @@ export default class extends Controller {
     };
 
     async connect() {
-        const { Chart, BarController, DoughnutController, BarElement, ArcElement, CategoryScale, LinearScale, Tooltip, Legend } = await import('chart.js');
-        Chart.register(BarController, DoughnutController, BarElement, ArcElement, CategoryScale, LinearScale, Tooltip, Legend);
+        const ChartModule = await import('chart.js/auto');
+        const Chart = ChartModule.default;
+
+        // Attendre que le layout soit complètement stabilisé
+        if (document.readyState !== 'complete') {
+            await new Promise(resolve => window.addEventListener('load', resolve, { once: true }));
+        }
+        await new Promise(resolve => requestAnimationFrame(resolve));
 
         const grayLight = 'rgba(156, 163, 175, 0.2)';
 
@@ -22,6 +28,17 @@ export default class extends Controller {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart',
+            },
+            animations: {
+                y: {
+                    from: (ctx) => ctx.chart.scales.y.getPixelForValue(0),
+                    duration: 1200,
+                    easing: 'easeOutCubic',
+                },
+            },
             scales: {
                 x: { grid: { display: false }, ticks: { font: { size: 10 } } },
                 y: { grid: { color: grayLight }, ticks: { font: { size: 10 } } },
@@ -72,12 +89,12 @@ export default class extends Controller {
         });
 
         // Répartition spectateurs
-        new Chart(this.element.querySelector('#chartSpectators'), {
+        const donutChart = new Chart(this.element.querySelector('#chartSpectators'), {
             type: 'doughnut',
             data: {
                 labels: ['Adultes', 'Enfants', 'Invitations'],
                 datasets: [{
-                    data: [this.adultsValue, this.childrenValue, this.invitationsValue],
+                    data: [0, 0, 0],
                     backgroundColor: ['rgb(17,24,39)', 'rgb(59,130,246)', 'rgb(249,115,22)'],
                     borderWidth: 0,
                 }],
@@ -85,11 +102,21 @@ export default class extends Controller {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutCubic',
+                },
                 plugins: {
                     legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16 } },
                 },
             },
         });
+
+        // Déclencher l'animation en mettant à jour les données après init
+        setTimeout(() => {
+            donutChart.data.datasets[0].data = [this.adultsValue, this.childrenValue, this.invitationsValue];
+            donutChart.update();
+        }, 50);
 
         // Places vs capacité
         new Chart(this.element.querySelector('#chartPlaces'), {

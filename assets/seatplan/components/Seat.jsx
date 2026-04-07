@@ -7,7 +7,7 @@ const STATUS_STYLES = {
     broken: 'bg-gray-300 border-gray-400 cursor-not-allowed opacity-50',
 };
 
-export default function Seat({ seat, selectedReservation, onClick }) {
+export default function Seat({ seat, selectedReservation, onClick, onContextMenu }) {
     if (!seat) return <div className="w-7 h-7" />;
 
     const isHighlighted = selectedReservation && seat.reservationId === selectedReservation.id;
@@ -16,11 +16,12 @@ export default function Seat({ seat, selectedReservation, onClick }) {
 
     return (
         <button
-            className={`w-7 h-7 rounded-sm border text-[9px] font-mono leading-none flex items-center justify-center transition-colors ${baseStyle} ${highlight}`}
+            className={`w-10 h-6 rounded-sm border text-[10px] font-semibold leading-none flex items-center justify-center transition-colors ${baseStyle} ${highlight}`}
             onClick={onClick}
+            onContextMenu={onContextMenu}
             title={`${seat.row}${seat.number}${seat.spectatorName ? ' — ' + seat.spectatorName : ''}`}
         >
-            {seat.number}
+            {seat.row}{seat.number}
         </button>
     );
 }

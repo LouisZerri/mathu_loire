@@ -28,16 +28,28 @@ class ReservationController extends AbstractController
         $status = $request->query->get('status', '');
         $page = max(1, (int) $request->query->get('page', 1));
 
+        $availableYears = $representationRepository->findAvailableYears();
+        $currentYear = (int) date('Y');
+
+        if (empty($availableYears)) {
+            $availableYears = [$currentYear];
+            $defaultYear = $currentYear;
+        } else {
+            $defaultYear = in_array($currentYear, $availableYears) ? $currentYear : $availableYears[0];
+        }
+
+        $selectedYear = (int) $request->query->get('year', $defaultYear);
+
         $representation = $repId ? $representationRepository->find($repId) : null;
         $statusFilter = $status ?: null;
 
-        $reservations = $reservationRepository->findByFilters($representation, $statusFilter, $page);
-        $totalReservations = $reservationRepository->countByFilters($representation, $statusFilter);
+        $reservations = $reservationRepository->findByFilters($representation, $statusFilter, $page, 20, $selectedYear);
+        $totalReservations = $reservationRepository->countByFilters($representation, $statusFilter, $selectedYear);
         $totalPages = max(1, (int) ceil($totalReservations / 20));
 
-        $representations = $representationRepository->findBy([], ['datetime' => 'ASC']);
+        $representations = $representationRepository->findByYear($selectedYear);
 
-        $cancelledReservations = $reservationRepository->findByFilters(null, 'cancelled', 1, 50);
+        $cancelledReservations = $reservationRepository->findByFilters(null, 'cancelled', 1, 50, $selectedYear);
 
         return $this->render('admin/reservation/index.html.twig', [
             'reservations' => $reservations,
@@ -48,6 +60,8 @@ class ReservationController extends AbstractController
             'totalPages' => $totalPages,
             'totalResults' => $totalReservations,
             'cancelledReservations' => $cancelledReservations,
+            'availableYears' => $availableYears,
+            'selectedYear' => $selectedYear,
         ]);
     }
 

@@ -83,6 +83,47 @@ class AppFixtures extends Fixture
         // === REPRESENTATIONS ===
         $representations = [];
 
+        // === SAISONS PASSÉES (archives) ===
+        $pastSeasons = [
+            ['show' => $show4, 'dates' => ['2022-01-29 20:30', '2022-01-30 15:00', '2022-02-05 20:30', '2022-02-06 15:00']],
+            ['show' => $show3, 'dates' => ['2023-01-28 20:30', '2023-01-29 15:00', '2023-02-04 20:30', '2023-02-05 15:00']],
+            ['show' => $show1, 'dates' => ['2024-01-27 20:30', '2024-01-28 15:00', '2024-02-03 20:30', '2024-02-04 15:00']],
+        ];
+
+        foreach ($pastSeasons as $season) {
+            foreach ($season['dates'] as $date) {
+                $rep = new Representation();
+                $rep->setShow($season['show']);
+                $rep->setDatetime(new \DateTime($date));
+                $rep->setStatus('offline');
+                $rep->setMaxOnlineReservations(140);
+                $rep->setVenueCapacity(175);
+                $rep->setAdultPrice('8.00');
+                $rep->setChildPrice('5.00');
+                $manager->persist($rep);
+                $representations[] = $rep;
+
+                // Quelques réservations archivées pour chaque représentation
+                for ($k = 0; $k < 3; $k++) {
+                    $res = new Reservation();
+                    $res->setRepresentation($rep);
+                    $res->setStatus('validated');
+                    $res->setNbAdults(rand(1, 3));
+                    $res->setNbChildren(rand(0, 2));
+                    $res->setNbInvitations(0);
+                    $res->setIsPMR(false);
+                    $res->setSpectatorLastName('Archive' . $k);
+                    $res->setSpectatorFirstName('Spectateur');
+                    $res->setSpectatorCity('Angers');
+                    $res->setSpectatorPhone('02 41 00 00 0' . $k);
+                    $res->setSpectatorEmail('archive' . $k . '@email.com');
+                    $res->setToken(bin2hex(random_bytes(32)));
+                    $res->setCreatedAt(new \DateTimeImmutable($date . ' -30 days'));
+                    $manager->persist($res);
+                }
+            }
+        }
+
         $dates1 = [
             new \DateTime('2027-01-30 20:30'),
             new \DateTime('2027-01-31 15:00'),
@@ -244,7 +285,14 @@ class AppFixtures extends Fixture
         ];
 
         $reservations = [];
-        $rep0 = $representations[0];
+        // Première représentation de la saison 2027 (Miss Purple)
+        $rep0 = null;
+        foreach ($representations as $rep) {
+            if ($rep->getDatetime()->format('Y') === '2027' && $rep->getStatus() === 'active') {
+                $rep0 = $rep;
+                break;
+            }
+        }
 
         foreach ($spectators as $i => $spec) {
             $reservation = new Reservation();
@@ -265,18 +313,18 @@ class AppFixtures extends Fixture
             $reservations[] = $reservation;
         }
 
-        // Quelques réservations sur d'autres représentations
-        foreach ([1, 2, 3, 4, 5] as $repIndex) {
-            if (!isset($representations[$repIndex])) {
-                continue;
-            }
-            for ($j = 0; $j < 3; $j++) {
+        // Quelques réservations sur d'autres représentations 2027
+        $reps2027 = array_filter($representations, fn($r) => $r->getDatetime()->format('Y') === '2027' && $r->getStatus() === 'active');
+        $reps2027 = array_values($reps2027);
+
+        foreach (array_slice($reps2027, 1, 6) as $rep) {
+            for ($j = 0; $j < 4; $j++) {
                 $spec = $spectators[array_rand($spectators)];
                 $reservation = new Reservation();
-                $reservation->setRepresentation($representations[$repIndex]);
+                $reservation->setRepresentation($rep);
                 $reservation->setStatus('validated');
                 $reservation->setNbAdults(rand(1, 3));
-                $reservation->setNbChildren(rand(0, 1));
+                $reservation->setNbChildren(rand(0, 2));
                 $reservation->setNbInvitations(0);
                 $reservation->setIsPMR(false);
                 $reservation->setSpectatorLastName($spec[0]);
@@ -368,22 +416,30 @@ class AppFixtures extends Fixture
             $manager->persist($res);
         }
 
-        // === SEAT ASSIGNMENTS (placement sur la première représentation) ===
-        $seatIndex = 0;
+        // === SEAT ASSIGNMENTS ===
+        // Placement automatique des réservations sur les 2 premières représentations 2027
         $seatKeys = array_keys($seats);
-        foreach (array_slice($reservations, 0, 5) as $res) {
-            $totalPlaces = $res->getNbAdults() + $res->getNbChildren() + $res->getNbInvitations();
-            for ($s = 0; $s < $totalPlaces && $seatIndex < count($seatKeys); $s++) {
-                $seat = $seats[$seatKeys[$seatIndex]];
-                if ($seat->isActive() && $res->getRepresentation() === $rep0) {
-                    $assignment = new SeatAssignment();
-                    $assignment->setSeat($seat);
-                    $assignment->setReservation($res);
-                    $assignment->setRepresentation($rep0);
-                    $assignment->setStatus('assigned');
-                    $manager->persist($assignment);
+        $repsToPlaceRepresentations = array_slice($reps2027, 0, 2);
+
+        foreach ($repsToPlaceRepresentations as $repToPlace) {
+            $seatIndex = 0;
+            foreach ($reservations as $res) {
+                if ($res->getRepresentation() !== $repToPlace) {
+                    continue;
                 }
-                $seatIndex++;
+                $totalPlaces = $res->getNbAdults() + $res->getNbChildren() + $res->getNbInvitations();
+                for ($s = 0; $s < $totalPlaces && $seatIndex < count($seatKeys); $s++) {
+                    $seat = $seats[$seatKeys[$seatIndex]];
+                    if ($seat->isActive()) {
+                        $assignment = new SeatAssignment();
+                        $assignment->setSeat($seat);
+                        $assignment->setReservation($res);
+                        $assignment->setRepresentation($repToPlace);
+                        $assignment->setStatus('assigned');
+                        $manager->persist($assignment);
+                    }
+                    $seatIndex++;
+                }
             }
         }
 

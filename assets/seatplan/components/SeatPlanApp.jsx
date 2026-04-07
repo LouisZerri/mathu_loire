@@ -31,6 +31,7 @@ export default function SeatPlanApp({ representationId }) {
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState(null);
+    const [contextMenu, setContextMenu] = useState(null);
 
     const fetchData = useCallback(async () => {
         if (!representationId) return;
@@ -51,6 +52,30 @@ export default function SeatPlanApp({ representationId }) {
     const showMessage = (text, type = 'success') => {
         setMessage({ text, type });
         setTimeout(() => setMessage(null), 3000);
+    };
+
+    const handleContextMenu = (e, seat) => {
+        e.preventDefault();
+        setContextMenu({ seat, x: e.clientX, y: e.clientY });
+    };
+
+    const closeContextMenu = () => setContextMenu(null);
+
+    const toggleBroken = async (seat) => {
+        if (seat.status === 'assigned') {
+            showMessage('Impossible : ce siège est déjà assigné.', 'error');
+            closeContextMenu();
+            return;
+        }
+        const res = await fetch('/admin/plan-de-salle/api/toggle-broken', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ seatId: seat.id }),
+        });
+        const data = await res.json();
+        showMessage(data.isActive ? `Siège ${seat.row}${seat.number} réparé` : `Siège ${seat.row}${seat.number} marqué cassé`);
+        closeContextMenu();
+        fetchData();
     };
 
     const handleSeatClick = async (seat) => {
@@ -101,7 +126,7 @@ export default function SeatPlanApp({ representationId }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ seatId: seat.id, representationId }),
             });
-            showMessage(`Siège ${seat.row}${seat.number} bloqué`);
+            showMessage(`Siège ${seat.row}${seat.number} bloqué pour cette représentation`);
             fetchData();
         }
     };
@@ -115,37 +140,72 @@ export default function SeatPlanApp({ representationId }) {
     }
 
     return (
-        <div className="flex gap-6">
-            <div className="flex-1">
+        <div className="flex flex-col xl:flex-row gap-4 xl:items-start xl:justify-center">
+            <div className="flex flex-col items-center min-w-0 w-full xl:w-auto">
                 {message && (
-                    <div className={`mb-4 px-4 py-2 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                    <div className={`mb-4 px-4 py-2 rounded-lg text-sm w-full max-w-md ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
                         {message.text}
                     </div>
                 )}
 
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <div className="text-center mb-6 py-2 bg-gray-900 text-white text-sm font-medium rounded">
-                        SCÈNE
-                    </div>
-
+                <div className="w-full overflow-x-auto">
                     <SeatGrid
                         seats={seats}
                         rows={ROWS}
                         seatMap={SEAT_MAP}
                         selectedReservation={selectedReservation}
                         onSeatClick={handleSeatClick}
+                        onSeatContextMenu={handleContextMenu}
                     />
-
-                    <SeatLegend />
                 </div>
+
+                {contextMenu && (
+                    <>
+                        <div className="fixed inset-0 z-40" onClick={closeContextMenu}></div>
+                        <div
+                            className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[200px]"
+                            style={{ top: contextMenu.y, left: contextMenu.x }}
+                        >
+                            <div className="px-3 py-2 border-b border-gray-100">
+                                <div className="text-xs text-gray-400">Siège {contextMenu.seat.row}{contextMenu.seat.number}</div>
+                            </div>
+                            {contextMenu.seat.status !== 'broken' && contextMenu.seat.status !== 'assigned' && (
+                                <button
+                                    onClick={() => toggleBroken(contextMenu.seat)}
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    Marquer comme cassé
+                                </button>
+                            )}
+                            {contextMenu.seat.status === 'broken' && (
+                                <button
+                                    onClick={() => toggleBroken(contextMenu.seat)}
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    Marquer comme réparé
+                                </button>
+                            )}
+                            <button
+                                onClick={closeContextMenu}
+                                className="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 border-t border-gray-100"
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
 
-            <div className="w-72 shrink-0">
+            <div className="w-full xl:w-72 shrink-0 xl:sticky xl:top-6 space-y-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <SeatLegend />
+                </div>
                 <ReservationList
                     reservations={reservations}
                     selectedReservation={selectedReservation}
                     onSelect={setSelectedReservation}
                 />
+                <p className="text-xs text-gray-400 text-center">Clic gauche : placer/bloquer · Clic droit : plus d'options</p>
             </div>
         </div>
     );

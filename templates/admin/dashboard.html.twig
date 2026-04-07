@@ -3,7 +3,24 @@
 {% block title %}Dashboard - Les Mathu'Loire{% endblock %}
 
 {% block body %}
-<h2 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+
+    <form method="get" class="flex items-center gap-3">
+        <label class="text-sm text-gray-500">Saison :</label>
+        <select name="year"
+                data-controller="auto-submit"
+                data-action="change->auto-submit#submit"
+                data-auto-submit-fade-target-value="#dashboard-content"
+                class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+            {% for year in availableYears %}
+                <option value="{{ year }}" {{ year == selectedYear ? 'selected' : '' }}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div id="dashboard-content" class="animate-fade-in">
 
 {% include 'components/admin/season_stats.html.twig' with { stats: seasonStats, repStats: repStats } %}
 
@@ -64,4 +81,6 @@
 </div>
 
 {% include 'components/admin/representation_stats.html.twig' with { repStats: repStats } %}
+
+</div>
 {% endblock %}

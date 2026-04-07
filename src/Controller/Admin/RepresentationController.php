@@ -18,20 +18,37 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class RepresentationController extends AbstractController
 {
     #[Route('/', name: 'app_admin_representation_index')]
-    public function index(RepresentationRepository $representationRepository): Response
+    public function index(Request $request, RepresentationRepository $representationRepository): Response
     {
-        $active = $representationRepository->findBy(
-            ['status' => ['active', 'offline']],
-            ['datetime' => 'ASC']
-        );
-        $cancelled = $representationRepository->findBy(
-            ['status' => 'cancelled'],
-            ['datetime' => 'ASC']
-        );
+        $availableYears = $representationRepository->findAvailableYears();
+        $currentYear = (int) date('Y');
+
+        if (empty($availableYears)) {
+            $availableYears = [$currentYear];
+            $defaultYear = $currentYear;
+        } else {
+            $defaultYear = in_array($currentYear, $availableYears) ? $currentYear : $availableYears[0];
+        }
+
+        $selectedYear = (int) $request->query->get('year', $defaultYear);
+
+        $representations = $representationRepository->findByYear($selectedYear);
+
+        $active = [];
+        $cancelled = [];
+        foreach ($representations as $rep) {
+            if ($rep->getStatus() === 'cancelled') {
+                $cancelled[] = $rep;
+            } else {
+                $active[] = $rep;
+            }
+        }
 
         return $this->render('admin/representation/index.html.twig', [
             'activeRepresentations' => $active,
             'cancelledRepresentations' => $cancelled,
+            'availableYears' => $availableYears,
+            'selectedYear' => $selectedYear,
         ]);
     }
 
