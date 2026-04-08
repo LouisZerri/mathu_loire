@@ -76,13 +76,14 @@ class ReservationFixtures extends Fixture implements DependentFixtureInterface
 
         // === Représentations 2027 avec taux de remplissage variés ===
         // Cible en places (sur 175 de jauge) pour produire des pourcentages différents
+        // Cibles choisies pour que la PREMIÈRE date de chaque spectacle déclenche des badges variés
         $targets = [
-            12 => 50,   // ~29% — faible
-            13 => 95,   // ~54% — moyen
-            14 => 130,  // ~74% — bon
-            15 => 155,  // ~89% — presque plein (ambre)
-            16 => 175,  // 100% — complet (rouge)
-            17 => 35,   // ~20% — faible
+            12 => 135,  // Miss Purple 1ère date : 5 places restantes → "Dernières places !"
+            13 => 95,   // Miss Purple 2e date : disponible
+            14 => 130,  // Miss Purple 3e date
+            15 => 60,   // Miss Purple 4e date
+            16 => 175,  // Gendre Idéal 1ère date : complet (rouge)
+            17 => 35,   // Gendre Idéal 2e date
         ];
 
         $rep0 = $this->getReference(RepresentationFixtures::REP_REFERENCE_PREFIX . 12, Representation::class);

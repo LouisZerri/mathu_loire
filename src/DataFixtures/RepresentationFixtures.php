@@ -73,6 +73,12 @@ class RepresentationFixtures extends Fixture implements DependentFixtureInterfac
         $manager->persist($full);
         $this->addReference(self::FULL, $full);
 
+        // Représentation imminente (J-3) pour tester le badge d'urgence public
+        $soonDate = (new \DateTime('+3 days'))->setTime(20, 30)->format('Y-m-d H:i');
+        $soon = $this->createRepresentation($pauvrePecheur, $soonDate, 'active');
+        $manager->persist($soon);
+        $this->addReference('rep-soon', $soon);
+
         // Représentation annulée
         $cancelled = $this->createRepresentation($gendreIdeal, '2027-02-20 20:30', 'cancelled');
         $manager->persist($cancelled);

@@ -13,10 +13,23 @@
                 {% set show = group.show %}
                 {% set reps = group.representations %}
                 {% set nbDates = reps|length %}
-                {% set nextDate = reps|first %}
-                {% set allFull = reps|filter(r => not r.isFull)|length == 0 %}
+                {% set nextRep = group.nextRep %}
+                {% set allFull = group.allFull %}
 
-                <a href="{{ path('app_show_detail', { id: show.id }) }}" class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
+                <a href="{{ path('app_show_detail', { id: show.id }) }}" class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow group flex flex-col relative">
+                    {# Badge d'urgence en haut à gauche #}
+                    {% if allFull %}
+                        <span class="absolute top-3 left-3 z-10 px-2.5 py-1 bg-red-600 text-white text-xs font-semibold rounded-full shadow">Complet</span>
+                    {% elseif nextRep.isAlmostFull %}
+                        <span class="absolute top-3 left-3 z-10 px-2.5 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full shadow">Dernières places !</span>
+                    {% elseif nextRep.daysUntil is not null and nextRep.daysUntil <= 7 and nextRep.daysUntil >= 0 %}
+                        <span class="absolute top-3 left-3 z-10 px-2.5 py-1 bg-gray-900 text-white text-xs font-semibold rounded-full shadow">
+                            {% if nextRep.daysUntil == 0 %}Aujourd'hui
+                            {% elseif nextRep.daysUntil == 1 %}Demain
+                            {% else %}J-{{ nextRep.daysUntil }}{% endif %}
+                        </span>
+                    {% endif %}
+
                     <div class="aspect-[2/3] overflow-hidden bg-gray-100">
                         {% if show.imageName %}
                             <img src="{{ asset('uploads/shows/' ~ show.imageName) }}"
@@ -33,12 +46,37 @@
                             <p class="text-xs text-gray-500 mt-0.5">De {{ show.author }}</p>
                         {% endif %}
 
-                        <div class="mt-auto pt-3 flex items-center justify-between text-xs">
+                        {# Liste des prochaines dates (max 3) #}
+                        <ul class="mt-3 space-y-1">
+                            {% for r in reps|slice(0, 3) %}
+                                <li class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600 capitalize">
+                                        {{ r.entity.datetime|format_datetime(pattern='EEE d MMM · HH:mm', locale='fr', timezone='Europe/Paris') }}
+                                    </span>
+                                    {% if r.isFull %}
+                                        <span class="text-red-600 font-medium">Complet</span>
+                                    {% elseif r.isAlmostFull %}
+                                        <span class="text-amber-600 font-medium">{{ r.remaining }} place{{ r.remaining > 1 ? 's' : '' }}</span>
+                                    {% else %}
+                                        <span class="text-emerald-600 font-medium">Disponible</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                            {% if nbDates > 3 %}
+                                <li class="text-xs text-gray-400">+ {{ nbDates - 3 }} autre{{ nbDates - 3 > 1 ? 's' : '' }}…</li>
+                            {% endif %}
+                        </ul>
+
+                        <div class="mt-auto pt-3 flex items-center justify-between text-xs border-t border-gray-100">
                             <span class="text-gray-500">
-                                {{ nbDates }} date{{ nbDates > 1 ? 's' : '' }} · à partir de {{ nextDate.entity.adultPrice }} €
+                                {% if group.totalBooked >= 10 %}
+                                    {{ group.totalBooked }} spectateurs ont déjà réservé
+                                {% else %}
+                                    à partir de {{ nextRep.entity.adultPrice }} €
+                                {% endif %}
                             </span>
                             {% if allFull %}
-                                <span class="text-red-600 font-medium">Complet</span>
+                                <span class="text-red-600 font-medium">—</span>
                             {% else %}
                                 <span class="text-gray-900 font-medium group-hover:translate-x-1 transition-transform">Réserver &rarr;</span>
                             {% endif %}

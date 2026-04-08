@@ -24,6 +24,7 @@ class ReservationController extends AbstractController
         $representations = $representationRepository->findUpcoming();
         $bookedMap = $representationRepository->findBookedPlacesMap();
 
+        $now = new \DateTime();
         $grouped = [];
         foreach ($representations as $rep) {
             $showId = $rep->getShow()->getId();
@@ -31,16 +32,44 @@ class ReservationController extends AbstractController
                 $grouped[$showId] = [
                     'show' => $rep->getShow(),
                     'representations' => [],
+                    'totalBooked' => 0,
+                    'totalCapacity' => 0,
+                    'allFull' => true,
+                    'nextRep' => null,
                 ];
             }
             $booked = $bookedMap[$rep->getId()] ?? 0;
-            $grouped[$showId]['representations'][] = [
+            $max = $rep->getMaxOnlineReservations();
+            $remaining = $max - $booked;
+            $isFull = $booked >= $max;
+            $daysUntil = (int) $now->diff($rep->getDatetime())->format('%r%a');
+
+            $repData = [
                 'entity' => $rep,
                 'booked' => $booked,
-                'remaining' => $rep->getMaxOnlineReservations() - $booked,
-                'isFull' => $booked >= $rep->getMaxOnlineReservations(),
+                'remaining' => $remaining,
+                'isFull' => $isFull,
+                'isAlmostFull' => !$isFull && $remaining <= 10,
+                'daysUntil' => $daysUntil,
             ];
+            $grouped[$showId]['representations'][] = $repData;
+            $grouped[$showId]['totalBooked'] += $booked;
+            $grouped[$showId]['totalCapacity'] += $max;
+            if (!$isFull) {
+                $grouped[$showId]['allFull'] = false;
+            }
+            if ($grouped[$showId]['nextRep'] === null) {
+                $grouped[$showId]['nextRep'] = $repData;
+            }
         }
+
+        // Tri : spectacles avec prochaine date non-complète d'abord, puis par date croissante
+        uasort($grouped, function ($a, $b) {
+            if ($a['allFull'] !== $b['allFull']) {
+                return $a['allFull'] <=> $b['allFull'];
+            }
+            return $a['nextRep']['entity']->getDatetime() <=> $b['nextRep']['entity']->getDatetime();
+        });
 
         $perPage = 12;
         $page = max(1, (int) $request->query->get('page', 1));
