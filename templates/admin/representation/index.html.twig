@@ -5,9 +5,14 @@
 {% block body %}
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <h2 class="text-2xl font-bold text-gray-900">Représentations</h2>
-    <a href="{{ path('app_admin_representation_new') }}" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap self-start">
-        Nouvelle représentation
-    </a>
+    <div class="flex items-center gap-2 self-start">
+        <a href="{{ path('app_admin_representation_calendar') }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+            Vue calendrier
+        </a>
+        <a href="{{ path('app_admin_representation_new') }}" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap">
+            Nouvelle représentation
+        </a>
+    </div>
 </div>
 
 {% for flash in app.flashes('success') %}

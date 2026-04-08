@@ -13,15 +13,28 @@ class ReservationFixtures extends Fixture implements DependentFixtureInterface
 {
     public const RESERVATION_REFERENCE_PREFIX = 'reservation-';
 
-    private const SPECTATORS = [
-        ['Théâtre', 'Les Mathu\'Loire', 'Loire-Authion', '02 41 57 30 81', 'contact@les-mathuloire.com'],
-        ['Dupuis', 'Sophie', 'Angers', '06 12 34 56 78', 'sophie.dupuis@email.com'],
-        ['Bernard', 'Pierre', 'Saumur', '06 98 76 54 32', 'p.bernard@email.com'],
-        ['Moreau', 'Claire', 'Saint-Mathurin', '06 11 22 33 44', 'claire.moreau@email.com'],
-        ['Petit', 'Luc', 'Brissac', '06 55 66 77 88', 'luc.petit@email.com'],
-        ['Roux', 'Isabelle', 'Loire-Authion', '06 99 88 77 66', 'i.roux@email.com'],
-        ['Lefevre', 'Marc', 'Angers', '06 44 33 22 11', 'marc.lefevre@email.com'],
-        ['Garcia', 'Nathalie', 'Trélazé', '06 77 88 99 00', 'n.garcia@email.com'],
+    private const LAST_NAMES = [
+        'Dupuis', 'Bernard', 'Moreau', 'Petit', 'Roux', 'Lefevre', 'Garcia', 'Martin',
+        'Durand', 'Robert', 'Richard', 'Simon', 'Laurent', 'Michel', 'Fournier', 'Girard',
+        'Bonnet', 'Dupont', 'Lambert', 'Fontaine', 'Rousseau', 'Vincent', 'Muller', 'Lefebvre',
+        'Faure', 'André', 'Mercier', 'Blanc', 'Guerin', 'Boyer', 'Garnier', 'Chevalier',
+        'François', 'Legrand', 'Gauthier', 'Perrin', 'Robin', 'Clement', 'Morin', 'Nicolas',
+        'Henry', 'Roussel', 'Mathieu', 'Gautier', 'Masson', 'Marchand', 'Duval', 'Denis',
+        'Dumont', 'Marie', 'Lemaire', 'Noel', 'Meyer', 'Dufour', 'Meunier', 'Brun',
+        'Blanchard', 'Giraud', 'Joly', 'Rivière', 'Lucas', 'Brunet', 'Gaillard', 'Barbier',
+    ];
+
+    private const FIRST_NAMES = [
+        'Sophie', 'Pierre', 'Claire', 'Luc', 'Isabelle', 'Marc', 'Nathalie', 'Jean',
+        'Marie', 'Paul', 'Julie', 'Thomas', 'Camille', 'Nicolas', 'Emma', 'Antoine',
+        'Léa', 'Hugo', 'Chloé', 'Louis', 'Sarah', 'Arthur', 'Manon', 'Jules',
+        'Alice', 'Maxime', 'Inès', 'Gabriel', 'Laura', 'Victor', 'Charlotte', 'Raphaël',
+        'Élise', 'Baptiste', 'Juliette', 'Alexandre', 'Margaux', 'Clément', 'Anaïs', 'Romain',
+    ];
+
+    private const CITIES = [
+        'Angers', 'Saumur', 'Saint-Mathurin', 'Brissac', 'Loire-Authion', 'Trélazé',
+        'Beaufort-en-Vallée', 'Les Ponts-de-Cé', 'Avrillé', 'Cholet', 'Baugé', 'Doué-la-Fontaine',
     ];
 
     public function getDependencies(): array
@@ -61,34 +74,43 @@ class ReservationFixtures extends Fixture implements DependentFixtureInterface
             }
         }
 
-        // === Réservations sur la première représentation 2027 (index 12 = Miss Purple 30 janv 2027) ===
+        // === Représentations 2027 avec taux de remplissage variés ===
+        // Cible en places (sur 175 de jauge) pour produire des pourcentages différents
+        $targets = [
+            12 => 50,   // ~29% — faible
+            13 => 95,   // ~54% — moyen
+            14 => 130,  // ~74% — bon
+            15 => 155,  // ~89% — presque plein (ambre)
+            16 => 175,  // 100% — complet (rouge)
+            17 => 35,   // ~20% — faible
+        ];
+
         $rep0 = $this->getReference(RepresentationFixtures::REP_REFERENCE_PREFIX . 12, Representation::class);
 
-        foreach (self::SPECTATORS as $i => $spec) {
-            $reservation = $this->createReservation($rep0, $spec, [
-                'nbAdults' => rand(1, 4),
-                'nbChildren' => rand(0, 2),
-                'isPMR' => $i === 3,
-                'createdAt' => new \DateTimeImmutable('-' . (30 - $i) . ' days'),
-            ]);
-            $manager->persist($reservation);
-            $this->addReference(self::RESERVATION_REFERENCE_PREFIX . $resaIndex, $reservation);
-            $resaIndex++;
-        }
-
-        // === Réservations sur les autres représentations 2027 (index 13 à 17) ===
-        for ($repIndex = 13; $repIndex <= 17; $repIndex++) {
+        foreach ($targets as $repIndex => $targetPlaces) {
             $rep = $this->getReference(RepresentationFixtures::REP_REFERENCE_PREFIX . $repIndex, Representation::class);
-            for ($j = 0; $j < 4; $j++) {
-                $spec = self::SPECTATORS[array_rand(self::SPECTATORS)];
+            $placed = 0;
+            $i = 0;
+
+            while ($placed < $targetPlaces) {
+                $remaining = $targetPlaces - $placed;
+                $groupSize = min($remaining, rand(1, 5));
+                $adults = max(1, rand((int) ceil($groupSize / 2), $groupSize));
+                $children = $groupSize - $adults;
+
+                $spec = $this->makeSpectator($repIndex, $i);
+
                 $reservation = $this->createReservation($rep, $spec, [
-                    'nbAdults' => rand(1, 3),
-                    'nbChildren' => rand(0, 2),
-                    'createdAt' => new \DateTimeImmutable('-' . rand(1, 20) . ' days'),
+                    'nbAdults' => $adults,
+                    'nbChildren' => $children,
+                    'isPMR' => ($repIndex === 12 && $i === 3),
+                    'createdAt' => new \DateTimeImmutable('-' . rand(1, 30) . ' days'),
                 ]);
                 $manager->persist($reservation);
                 $this->addReference(self::RESERVATION_REFERENCE_PREFIX . $resaIndex, $reservation);
                 $resaIndex++;
+                $placed += $groupSize;
+                $i++;
             }
         }
 
@@ -113,7 +135,7 @@ class ReservationFixtures extends Fixture implements DependentFixtureInterface
         $full = $this->getReference(RepresentationFixtures::FULL, Representation::class);
 
         for ($j = 0; $j < 5; $j++) {
-            $res = $this->createReservation($almostFull, self::SPECTATORS[$j], [
+            $res = $this->createReservation($almostFull, $this->makeSpectator(900, $j), [
                 'nbAdults' => 1,
                 'createdAt' => new \DateTimeImmutable('-' . (10 - $j) . ' days'),
             ]);
@@ -121,7 +143,7 @@ class ReservationFixtures extends Fixture implements DependentFixtureInterface
         }
 
         for ($j = 0; $j < 5; $j++) {
-            $res = $this->createReservation($full, self::SPECTATORS[$j], [
+            $res = $this->createReservation($full, $this->makeSpectator(901, $j), [
                 'nbAdults' => 1,
                 'createdAt' => new \DateTimeImmutable('-' . (10 - $j) . ' days'),
             ]);
@@ -129,6 +151,24 @@ class ReservationFixtures extends Fixture implements DependentFixtureInterface
         }
 
         $manager->flush();
+    }
+
+    private function makeSpectator(int $repIndex, int $i): array
+    {
+        // Combinaison déterministe mais variée : assure l'unicité (repIndex,i) sans répétition visible
+        $lastIdx = ($repIndex * 37 + $i * 13) % count(self::LAST_NAMES);
+        $firstIdx = ($repIndex * 17 + $i * 7) % count(self::FIRST_NAMES);
+        $cityIdx = ($repIndex * 5 + $i * 3) % count(self::CITIES);
+
+        $last = self::LAST_NAMES[$lastIdx];
+        $first = self::FIRST_NAMES[$firstIdx];
+        $city = self::CITIES[$cityIdx];
+
+        $phone = sprintf('06 %02d %02d %02d %02d', ($i * 11) % 100, ($i * 23) % 100, ($repIndex * 7) % 100, ($repIndex + $i) % 100);
+        $slug = strtolower(str_replace(['é', 'è', 'ê', 'à', 'ç', ' ', '\''], ['e', 'e', 'e', 'a', 'c', '', ''], $first . '.' . $last));
+        $email = $slug . '.r' . $repIndex . 'i' . $i . '@email.com';
+
+        return [$last, $first, $city, $phone, $email];
     }
 
     private function createReservation(Representation $rep, array $spectator, array $options = []): Reservation

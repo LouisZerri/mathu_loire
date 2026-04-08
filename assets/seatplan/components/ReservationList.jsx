@@ -1,13 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function ReservationList({ reservations, selectedReservation, onSelect }) {
+    const [search, setSearch] = useState('');
+
+    const filtered = reservations.filter(r => {
+        if (!search.trim()) return true;
+        return r.spectatorName.toLowerCase().includes(search.toLowerCase());
+    });
+
     return (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900">Réservations</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                    Sélectionnez une réservation puis cliquez sur un siège
-                </p>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex-1 min-h-0 flex flex-col">
+            <div className="px-4 py-3 border-b border-gray-200 shrink-0">
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Réservations</h3>
+                <input
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Rechercher un nom…"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                />
             </div>
 
             {selectedReservation && (
@@ -29,8 +40,8 @@ export default function ReservationList({ reservations, selectedReservation, onS
                 </div>
             )}
 
-            <div className="max-h-[500px] overflow-y-auto divide-y divide-gray-100">
-                {reservations.map(reservation => {
+            <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-gray-100">
+                {filtered.map(reservation => {
                     const isSelected = selectedReservation?.id === reservation.id;
                     const isComplete = reservation.assignedCount >= reservation.totalPlaces;
 
@@ -55,9 +66,9 @@ export default function ReservationList({ reservations, selectedReservation, onS
                     );
                 })}
 
-                {reservations.length === 0 && (
+                {filtered.length === 0 && (
                     <p className="px-4 py-6 text-center text-xs text-gray-400">
-                        Aucune réservation validée.
+                        {reservations.length === 0 ? 'Aucune réservation validée.' : 'Aucun résultat.'}
                     </p>
                 )}
             </div>

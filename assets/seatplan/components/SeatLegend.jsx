@@ -19,6 +19,9 @@ export default function SeatLegend() {
                     </div>
                 ))}
             </div>
+            <p className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100">
+                Clic gauche : placer/bloquer · Clic droit : plus d'options
+            </p>
         </div>
     );
 }

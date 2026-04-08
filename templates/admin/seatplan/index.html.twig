@@ -3,8 +3,6 @@
 {% block title %}Plan de salle - Les Mathu'Loire{% endblock %}
 
 {% block body %}
-<h2 class="text-2xl font-bold text-gray-900 mb-6">Plan de salle</h2>
-
 <div id="seatplan-root"
      data-representations='{{ representations|map(r => { id: r.id, label: r.show.title ~ " — " ~ r.datetime|format_datetime(pattern="EEE d MMM yyyy HH:mm", locale="fr", timezone="Europe/Paris")|capitalize })|json_encode|e('html_attr') }}'
      data-preselected-representation="{{ preselectedRepresentationId }}"

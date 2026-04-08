@@ -23,7 +23,6 @@ class SeatAssignmentFixtures extends Fixture implements DependentFixtureInterfac
     public function load(ObjectManager $manager): void
     {
         $rep0 = $this->getReference(RepresentationFixtures::REP_REFERENCE_PREFIX . 12, Representation::class);
-        $rep1 = $this->getReference(RepresentationFixtures::REP_REFERENCE_PREFIX . 13, Representation::class);
 
         // Récupérer tous les sièges via leurs références
         $seats = [];
@@ -33,8 +32,13 @@ class SeatAssignmentFixtures extends Fixture implements DependentFixtureInterfac
             }
         }
 
-        // Placement automatique sur les 2 premières représentations 2027
-        foreach ([$rep0, $rep1] as $rep) {
+        // Placement automatique sur toutes les représentations 2027 (12 à 17)
+        $reps = [];
+        for ($i = 12; $i <= 17; $i++) {
+            $reps[] = $this->getReference(RepresentationFixtures::REP_REFERENCE_PREFIX . $i, Representation::class);
+        }
+
+        foreach ($reps as $rep) {
             $seatIndex = 0;
             $reservations = $manager->getRepository(Reservation::class)->findBy(['representation' => $rep, 'status' => 'validated']);
 

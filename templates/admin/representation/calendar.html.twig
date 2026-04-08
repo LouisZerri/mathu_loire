@@ -1,0 +1,97 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Calendrier - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">Calendrier des représentations</h2>
+    <div class="flex items-center gap-2 self-start">
+        <a href="{{ path('app_admin_representation_index') }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+            Vue liste
+        </a>
+        <a href="{{ path('app_admin_representation_new') }}" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap">
+            Nouvelle représentation
+        </a>
+    </div>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+        <div class="flex items-center gap-1">
+            <a href="{{ path('app_admin_representation_calendar', {year: prevYear, month: prevMonth}) }}"
+               class="p-2 rounded-md hover:bg-gray-100 text-gray-600" title="Mois précédent">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <a href="{{ path('app_admin_representation_calendar') }}"
+               class="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+                Aujourd'hui
+            </a>
+        </div>
+        <h3 class="text-base font-semibold text-gray-900 capitalize">
+            {{ monthLabel }}
+        </h3>
+        <a href="{{ path('app_admin_representation_calendar', {year: nextYear, month: nextMonth}) }}"
+           class="p-2 rounded-md hover:bg-gray-100 text-gray-600" title="Mois suivant">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-7 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wide">
+        {% for day in ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] %}
+            <div class="px-2 py-2 text-center">{{ day }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="grid grid-cols-7">
+        {% if startOffset > 0 %}
+            {% for i in 1..startOffset %}
+                <div class="min-h-28 border-r border-b border-gray-200 bg-gray-50"></div>
+            {% endfor %}
+        {% endif %}
+
+        {% for day in 1..daysInMonth %}
+            {% set dayKey = '%04d-%02d-%02d'|format(year, month, day) %}
+            {% set reps = byDay[dayKey] ?? [] %}
+            {% set isToday = dayKey == today %}
+            <div class="min-h-28 border-r border-b border-gray-200 p-1.5 {{ isToday ? 'bg-amber-50' : '' }}">
+                <div class="text-xs font-semibold mb-1 {{ isToday ? 'text-amber-700' : 'text-gray-500' }}">{{ day }}</div>
+                <div class="space-y-1">
+                    {% for rep in reps %}
+                        {% set booked = bookedMap[rep.id] ?? 0 %}
+                        {% set capacity = rep.venueCapacity ?: 1 %}
+                        {% set pct = (booked / capacity * 100)|round %}
+                        {% if rep.status == 'cancelled' %}
+                            {% set cardClass = 'bg-red-100 text-red-700 line-through' %}
+                        {% elseif pct >= 100 %}
+                            {% set cardClass = 'bg-red-600 text-white hover:bg-red-700' %}
+                        {% elseif pct >= 80 %}
+                            {% set cardClass = 'bg-amber-500 text-white hover:bg-amber-600' %}
+                        {% elseif pct >= 40 %}
+                            {% set cardClass = 'bg-emerald-600 text-white hover:bg-emerald-700' %}
+                        {% else %}
+                            {% set cardClass = 'bg-sky-600 text-white hover:bg-sky-700' %}
+                        {% endif %}
+                        <a href="{{ path('app_admin_representation_edit', {id: rep.id}) }}"
+                           class="block px-1.5 py-1 text-xs rounded {{ cardClass }}"
+                           title="{{ rep.show.title }} — {{ rep.datetime|date('H:i') }} — {{ booked }}/{{ capacity }} places">
+                            <div class="font-medium truncate">{{ rep.datetime|date('H:i') }} {{ rep.show.title }}</div>
+                            {% if rep.status != 'cancelled' %}
+                                <div class="text-[10px] opacity-90">{{ booked }}/{{ capacity }} · {{ pct }}%</div>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+
+        {# Complète la dernière ligne #}
+        {% set totalCells = startOffset + daysInMonth %}
+        {% set trailing = (7 - (totalCells % 7)) % 7 %}
+        {% if trailing > 0 %}
+            {% for i in 1..trailing %}
+                <div class="min-h-28 border-r border-b border-gray-200 bg-gray-50"></div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -79,6 +79,26 @@ class RepresentationRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return Representation[]
+     */
+    public function findByMonth(int $year, int $month): array
+    {
+        $start = new \DateTime(sprintf('%04d-%02d-01 00:00:00', $year, $month));
+        $end = (clone $start)->modify('+1 month');
+
+        return $this->createQueryBuilder('r')
+            ->join('r.show', 's')
+            ->addSelect('s')
+            ->where('r.datetime >= :start')
+            ->andWhere('r.datetime < :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('r.datetime', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return array<int, int> [representationId => totalBookedPlaces]
      */
     public function findBookedPlacesMap(): array

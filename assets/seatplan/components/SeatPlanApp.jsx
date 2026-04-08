@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import SeatGrid from './SeatGrid';
 import ReservationList from './ReservationList';
 import SeatLegend from './SeatLegend';
@@ -33,6 +33,21 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
     const [message, setMessage] = useState(null);
     const [contextMenu, setContextMenu] = useState(null);
     const [swapSource, setSwapSource] = useState(null);
+    const planRef = useRef(null);
+    const [planHeight, setPlanHeight] = useState(null);
+
+    useEffect(() => {
+        if (!planRef.current) return;
+        const update = () => setPlanHeight(planRef.current?.offsetHeight ?? null);
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(planRef.current);
+        window.addEventListener('resize', update);
+        return () => {
+            ro.disconnect();
+            window.removeEventListener('resize', update);
+        };
+    }, [loading]);
 
     const fetchData = useCallback(async () => {
         if (!representationId) return;
@@ -230,7 +245,7 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
 
     return (
         <div className="flex flex-col xl:flex-row gap-4 xl:items-start xl:justify-center">
-            <div className="flex flex-col items-center min-w-0 w-full xl:w-auto">
+            <div ref={planRef} className="flex flex-col items-center min-w-0 w-full xl:w-auto">
                 {message && (
                     <div className={`mb-4 px-4 py-2 rounded-lg text-sm w-full max-w-md ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
                         {message.text}
@@ -300,16 +315,15 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
                 )}
             </div>
 
-            <div className="w-full xl:w-72 shrink-0 xl:sticky xl:top-6 space-y-4">
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <SeatLegend />
-                </div>
+            <div className="w-full xl:w-80 shrink-0 flex flex-col gap-4 min-h-0" style={planHeight ? { height: planHeight + 'px' } : undefined}>
                 <ReservationList
                     reservations={reservations}
                     selectedReservation={selectedReservation}
                     onSelect={setSelectedReservation}
                 />
-                <p className="text-xs text-gray-400 text-center">Clic gauche : placer/bloquer · Clic droit : plus d'options</p>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shrink-0">
+                    <SeatLegend />
+                </div>
             </div>
         </div>
     );
