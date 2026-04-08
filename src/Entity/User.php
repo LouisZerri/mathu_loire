@@ -59,6 +59,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $resetTokenExpiresAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastReservationsViewedAt = null;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -213,6 +216,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setResetTokenExpiresAt(?\DateTimeImmutable $resetTokenExpiresAt): static
     {
         $this->resetTokenExpiresAt = $resetTokenExpiresAt;
+
+        return $this;
+    }
+
+    public function getLastReservationsViewedAt(): ?\DateTimeImmutable
+    {
+        return $this->lastReservationsViewedAt;
+    }
+
+    public function setLastReservationsViewedAt(?\DateTimeImmutable $lastReservationsViewedAt): static
+    {
+        $this->lastReservationsViewedAt = $lastReservationsViewedAt;
 
         return $this;
     }

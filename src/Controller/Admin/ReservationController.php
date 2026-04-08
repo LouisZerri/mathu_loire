@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Reservation;
+use App\Entity\User;
 use App\Form\AdminReservationType;
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
@@ -24,7 +25,14 @@ class ReservationController extends AbstractController
         Request $request,
         ReservationRepository $reservationRepository,
         RepresentationRepository $representationRepository,
+        EntityManagerInterface $em,
     ): Response {
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $user->setLastReservationsViewedAt(new \DateTimeImmutable());
+            $em->flush();
+        }
+
         $repId = (int) $request->query->get('representation', 0);
         $status = $request->query->get('status', '');
         $search = trim((string) $request->query->get('search', ''));

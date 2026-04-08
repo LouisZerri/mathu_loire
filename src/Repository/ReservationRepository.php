@@ -40,6 +40,22 @@ class ReservationRepository extends ServiceEntityRepository
         return $qb->getQuery()->getSingleResult();
     }
 
+    public function countNewSince(?\DateTimeImmutable $since): int
+    {
+        if (!$since) {
+            return 0;
+        }
+
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->where('r.createdAt > :since')
+            ->andWhere('r.status = :status')
+            ->setParameter('since', $since)
+            ->setParameter('status', 'validated')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function findByFilters(?Representation $representation = null, ?string $status = null, int $page = 1, int $limit = 20, ?int $year = null, ?string $search = null): array
     {
         $qb = $this->createQueryBuilder('r')
