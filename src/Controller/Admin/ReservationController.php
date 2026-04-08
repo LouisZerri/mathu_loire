@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\AdminReservationType;
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
+use App\Service\AuditLogger;
 use App\Service\HelloAssoPaymentHandler;
 use App\Service\ReservationMailer;
 use App\Service\ReservationService;
@@ -134,6 +135,7 @@ class ReservationController extends AbstractController
     public function new(
         Request $request,
         EntityManagerInterface $em,
+        AuditLogger $audit,
     ): Response {
         $reservation = new Reservation();
         $form = $this->createForm(AdminReservationType::class, $reservation);
@@ -153,6 +155,13 @@ class ReservationController extends AbstractController
                 $em->persist($reservation);
                 $em->flush();
 
+                $audit->log(
+                    AuditLogger::RESERVATION_CREATE,
+                    sprintf('Création manuelle de la réservation #%d (%s %s)', $reservation->getId(), $reservation->getSpectatorFirstName(), $reservation->getSpectatorLastName()),
+                    'Reservation',
+                    $reservation->getId(),
+                );
+
                 $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' créée.');
 
                 return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
@@ -170,6 +179,7 @@ class ReservationController extends AbstractController
         Reservation $reservation,
         Request $request,
         ReservationService $reservationService,
+        AuditLogger $audit,
     ): Response {
         $previousStatus = $reservation->getStatus();
         $form = $this->createForm(AdminReservationType::class, $reservation);
@@ -181,8 +191,20 @@ class ReservationController extends AbstractController
             // Si le statut passe à cancelled, libérer les sièges via le service
             if ($previousStatus !== 'cancelled' && $reservation->getStatus() === 'cancelled') {
                 $reservationService->cancel($reservation);
+                $audit->log(
+                    AuditLogger::RESERVATION_CANCEL,
+                    sprintf('Annulation de la réservation #%d', $reservation->getId()),
+                    'Reservation',
+                    $reservation->getId(),
+                );
             } else {
                 $reservationService->save();
+                $audit->log(
+                    AuditLogger::RESERVATION_UPDATE,
+                    sprintf('Mise à jour de la réservation #%d', $reservation->getId()),
+                    'Reservation',
+                    $reservation->getId(),
+                );
             }
 
             $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' mise à jour.');
@@ -204,9 +226,16 @@ class ReservationController extends AbstractController
         Reservation $reservation,
         ReservationMailer $mailer,
         Request $request,
+        AuditLogger $audit,
     ): Response {
         if ($this->isCsrfTokenValid('resend_email_' . $reservation->getId(), $request->request->get('_token'))) {
             $mailer->sendConfirmation($reservation);
+            $audit->log(
+                AuditLogger::RESERVATION_RESEND_EMAIL,
+                sprintf('Renvoi email réservation #%d à %s', $reservation->getId(), $reservation->getSpectatorEmail()),
+                'Reservation',
+                $reservation->getId(),
+            );
             $this->addFlash('success', 'Email de confirmation renvoyé à ' . $reservation->getSpectatorEmail() . '.');
         }
 
@@ -218,9 +247,16 @@ class ReservationController extends AbstractController
         Reservation $reservation,
         Request $request,
         ReservationService $reservationService,
+        AuditLogger $audit,
     ): Response {
         if ($this->isCsrfTokenValid('cancel_' . $reservation->getId(), $request->request->get('_token'))) {
             $reservationService->cancel($reservation);
+            $audit->log(
+                AuditLogger::RESERVATION_CANCEL,
+                sprintf('Annulation de la réservation #%d', $reservation->getId()),
+                'Reservation',
+                $reservation->getId(),
+            );
             $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' annulée.');
         }
 
@@ -234,6 +270,7 @@ class ReservationController extends AbstractController
         HelloAssoPaymentHandler $helloAssoHandler,
         ReservationService $reservationService,
         ReservationMailer $mailer,
+        AuditLogger $audit,
     ): Response {
         if ($this->isCsrfTokenValid('refund_' . $reservation->getId(), $request->request->get('_token'))) {
             $refunded = $helloAssoHandler->refund($reservation);
@@ -241,6 +278,12 @@ class ReservationController extends AbstractController
             if ($refunded) {
                 $reservationService->cancel($reservation);
                 $mailer->sendCancellation($reservation);
+                $audit->log(
+                    AuditLogger::RESERVATION_REFUND,
+                    sprintf('Remboursement HelloAsso + annulation réservation #%d', $reservation->getId()),
+                    'Reservation',
+                    $reservation->getId(),
+                );
                 $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' annulée et remboursée.');
             } else {
                 $this->addFlash('error', 'Le remboursement a échoué. Vérifiez les logs.');
