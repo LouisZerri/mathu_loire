@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Show;
 use App\Form\ShowType;
 use App\Repository\ShowRepository;
+use App\Service\AuditLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -27,7 +28,7 @@ class ShowController extends AbstractController
     }
 
     #[Route('/new', name: 'app_admin_show_new')]
-    public function new(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
+    public function new(Request $request, EntityManagerInterface $em, SluggerInterface $slugger, AuditLogger $audit): Response
     {
         $show = new Show();
         $form = $this->createForm(ShowType::class, $show);
@@ -37,6 +38,13 @@ class ShowController extends AbstractController
             $this->handleImageUpload($form, $show, $slugger);
             $em->persist($show);
             $em->flush();
+
+            $audit->log(
+                AuditLogger::SHOW_CREATE,
+                sprintf('Création du spectacle "%s"', $show->getTitle()),
+                'Show',
+                $show->getId(),
+            );
 
             $this->addFlash('success', 'Spectacle "' . $show->getTitle() . '" créé.');
 
@@ -51,7 +59,7 @@ class ShowController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_admin_show_edit', requirements: ['id' => '\d+'])]
-    public function edit(Show $show, Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
+    public function edit(Show $show, Request $request, EntityManagerInterface $em, SluggerInterface $slugger, AuditLogger $audit): Response
     {
         $form = $this->createForm(ShowType::class, $show);
         $form->handleRequest($request);
@@ -59,6 +67,13 @@ class ShowController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->handleImageUpload($form, $show, $slugger);
             $em->flush();
+
+            $audit->log(
+                AuditLogger::SHOW_UPDATE,
+                sprintf('Mise à jour du spectacle "%s"', $show->getTitle()),
+                'Show',
+                $show->getId(),
+            );
 
             $this->addFlash('success', 'Spectacle "' . $show->getTitle() . '" mis à jour.');
 
@@ -73,9 +88,11 @@ class ShowController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'app_admin_show_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function delete(Show $show, Request $request, EntityManagerInterface $em): Response
+    public function delete(Show $show, Request $request, EntityManagerInterface $em, AuditLogger $audit): Response
     {
         if ($this->isCsrfTokenValid('delete_show_' . $show->getId(), $request->request->get('_token'))) {
+            $title = $show->getTitle();
+            $showId = $show->getId();
             if ($show->getImageName()) {
                 $imagePath = $this->getParameter('kernel.project_dir') . '/public/uploads/shows/' . $show->getImageName();
                 if (file_exists($imagePath)) {
@@ -84,7 +101,13 @@ class ShowController extends AbstractController
             }
             $em->remove($show);
             $em->flush();
-            $this->addFlash('success', 'Spectacle "' . $show->getTitle() . '" et toutes ses données supprimés.');
+            $audit->log(
+                AuditLogger::SHOW_DELETE,
+                sprintf('Suppression du spectacle "%s" (et toutes ses données)', $title),
+                'Show',
+                $showId,
+            );
+            $this->addFlash('success', 'Spectacle "' . $title . '" et toutes ses données supprimés.');
         }
 
         return $this->redirectToRoute('app_admin_show_index');

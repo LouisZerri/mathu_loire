@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
+use App\Service\AuditLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,6 +33,7 @@ class UserController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
+        AuditLogger $audit,
     ): Response {
         $user = new User();
         $form = $this->createForm(UserType::class, $user, ['is_new' => true]);
@@ -43,6 +45,13 @@ class UserController extends AbstractController
 
             $em->persist($user);
             $em->flush();
+
+            $audit->log(
+                AuditLogger::USER_CREATE,
+                sprintf('Création utilisateur %s (%s)', $user->getEmail(), implode(',', $user->getRoles())),
+                'User',
+                $user->getId(),
+            );
 
             $this->addFlash('success', 'Utilisateur créé.');
 
@@ -62,6 +71,7 @@ class UserController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
+        AuditLogger $audit,
     ): Response {
         $form = $this->createForm(UserType::class, $user, ['is_new' => false]);
         $form->handleRequest($request);
@@ -73,6 +83,13 @@ class UserController extends AbstractController
             }
 
             $em->flush();
+
+            $audit->log(
+                AuditLogger::USER_UPDATE,
+                sprintf('Mise à jour utilisateur %s%s', $user->getEmail(), $plainPassword ? ' (mot de passe changé)' : ''),
+                'User',
+                $user->getId(),
+            );
 
             $this->addFlash('success', 'Utilisateur mis à jour.');
 
@@ -87,7 +104,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'app_admin_user_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function delete(User $user, Request $request, EntityManagerInterface $em): Response
+    public function delete(User $user, Request $request, EntityManagerInterface $em, AuditLogger $audit): Response
     {
         if ($user === $this->getUser()) {
             $this->addFlash('error', 'Vous ne pouvez pas supprimer votre propre compte.');
@@ -96,8 +113,16 @@ class UserController extends AbstractController
         }
 
         if ($this->isCsrfTokenValid('delete_user_' . $user->getId(), $request->request->get('_token'))) {
+            $email = $user->getEmail();
+            $userId = $user->getId();
             $em->remove($user);
             $em->flush();
+            $audit->log(
+                AuditLogger::USER_DELETE,
+                sprintf('Suppression utilisateur %s', $email),
+                'User',
+                $userId,
+            );
             $this->addFlash('success', 'Utilisateur supprimé.');
         }
 

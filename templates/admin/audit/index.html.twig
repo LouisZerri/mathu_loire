@@ -1,0 +1,109 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Journal d'audit - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900">Journal d'audit</h2>
+        <p class="text-sm text-gray-500 mt-1">Historique des actions effectuées par les administrateurs et billettistes.</p>
+    </div>
+</div>
+
+<form method="get" class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Utilisateur</label>
+            <select name="user" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+                <option value="">Tous</option>
+                {% for u in users %}
+                    <option value="{{ u.id }}" {{ currentUser and currentUser.id == u.id ? 'selected' : '' }}>{{ u.email }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Action</label>
+            <select name="action" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+                <option value="">Toutes</option>
+                {% for a in actions %}
+                    <option value="{{ a }}" {{ currentAction == a ? 'selected' : '' }}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Du</label>
+            <input type="date" name="from" value="{{ currentFrom }}" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Au</label>
+            <input type="date" name="to" value="{{ currentTo }}" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800">Filtrer</button>
+            <a href="{{ path('app_admin_audit_index') }}" class="px-4 py-2 border border-gray-300 text-sm text-gray-700 rounded-md hover:bg-gray-50">Réinitialiser</a>
+        </div>
+    </div>
+</form>
+
+<div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-900">{{ total }} entrée{{ total > 1 ? 's' : '' }}</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                    <th class="px-4 py-3">Date</th>
+                    <th class="px-4 py-3">Utilisateur</th>
+                    <th class="px-4 py-3">Action</th>
+                    <th class="px-4 py-3">Détails</th>
+                    <th class="px-4 py-3">IP</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for log in logs %}
+                    {% set isLogin = log.action starts with 'login' or log.action == 'logout' %}
+                    {% set isDelete = log.action ends with '.delete' or log.action ends with '.cancel' or log.action ends with '.refund' %}
+                    {% set isFailure = log.action == 'login.failure' %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
+                            {{ log.createdAt|format_datetime(pattern='d/MM/yyyy HH:mm:ss', locale='fr', timezone='Europe/Paris') }}
+                        </td>
+                        <td class="px-4 py-3 text-gray-900 whitespace-nowrap">
+                            {{ log.userEmail ?: '—' }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                {% if isFailure %}bg-red-100 text-red-800
+                                {% elseif isDelete %}bg-orange-100 text-orange-800
+                                {% elseif isLogin %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-700">{{ log.summary }}</td>
+                        <td class="px-4 py-3 text-gray-400 text-xs font-mono">{{ log.ipAddress ?: '—' }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Aucune entrée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if totalPages > 1 %}
+    <div class="px-5 py-3 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-gray-500">Page {{ currentPage }} / {{ totalPages }}</div>
+        <div class="flex gap-2">
+            {% if currentPage > 1 %}
+                <a href="{{ path('app_admin_audit_index', app.request.query.all|merge({page: currentPage - 1})) }}" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Précédent</a>
+            {% endif %}
+            {% if currentPage < totalPages %}
+                <a href="{{ path('app_admin_audit_index', app.request.query.all|merge({page: currentPage + 1})) }}" class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Suivant</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

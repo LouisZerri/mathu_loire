@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Representation;
 use App\Form\RepresentationType;
 use App\Repository\RepresentationRepository;
+use App\Service\AuditLogger;
 use App\Service\SessionReportPdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -98,7 +99,7 @@ class RepresentationController extends AbstractController
     }
 
     #[Route('/new', name: 'app_admin_representation_new')]
-    public function new(Request $request, EntityManagerInterface $em, RepresentationRepository $representationRepository): Response
+    public function new(Request $request, EntityManagerInterface $em, RepresentationRepository $representationRepository, AuditLogger $audit): Response
     {
         $representation = new Representation();
 
@@ -124,6 +125,13 @@ class RepresentationController extends AbstractController
             $em->persist($representation);
             $em->flush();
 
+            $audit->log(
+                AuditLogger::REPRESENTATION_CREATE,
+                sprintf('Création représentation %s — %s', $representation->getShow()->getTitle(), $representation->getDatetime()->format('d/m/Y H:i')),
+                'Representation',
+                $representation->getId(),
+            );
+
             $this->addFlash('success', 'Représentation créée.');
 
             return $this->redirectToRoute('app_admin_representation_index');
@@ -137,13 +145,20 @@ class RepresentationController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_admin_representation_edit', requirements: ['id' => '\d+'])]
-    public function edit(Representation $representation, Request $request, EntityManagerInterface $em): Response
+    public function edit(Representation $representation, Request $request, EntityManagerInterface $em, AuditLogger $audit): Response
     {
         $form = $this->createForm(RepresentationType::class, $representation);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
+
+            $audit->log(
+                AuditLogger::REPRESENTATION_UPDATE,
+                sprintf('Mise à jour représentation #%d (%s)', $representation->getId(), $representation->getShow()->getTitle()),
+                'Representation',
+                $representation->getId(),
+            );
 
             $this->addFlash('success', 'Représentation mise à jour.');
 
@@ -158,11 +173,17 @@ class RepresentationController extends AbstractController
     }
 
     #[Route('/{id}/cancel', name: 'app_admin_representation_cancel', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function cancel(Representation $representation, Request $request, EntityManagerInterface $em): Response
+    public function cancel(Representation $representation, Request $request, EntityManagerInterface $em, AuditLogger $audit): Response
     {
         if ($this->isCsrfTokenValid('cancel_rep_' . $representation->getId(), $request->request->get('_token'))) {
             $representation->setStatus('cancelled');
             $em->flush();
+            $audit->log(
+                AuditLogger::REPRESENTATION_CANCEL,
+                sprintf('Annulation représentation #%d (%s)', $representation->getId(), $representation->getShow()->getTitle()),
+                'Representation',
+                $representation->getId(),
+            );
             $this->addFlash('success', 'Représentation annulée.');
         }
 
