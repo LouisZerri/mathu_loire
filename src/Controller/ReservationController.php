@@ -335,7 +335,7 @@ class ReservationController extends AbstractController
     ): Response {
         $reservation = $this->getReservationByToken($id, $token, $reservationRepository);
 
-        if (!$this->isCsrfTokenValid('self_cancel_' . $reservation->getId(), $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('self_cancel_' . $reservation->getId(), (string) $request->request->get('_token'))) {
             throw $this->createNotFoundException();
         }
 

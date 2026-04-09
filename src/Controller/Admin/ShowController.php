@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin/spectacles')]
@@ -90,7 +91,7 @@ class ShowController extends AbstractController
     #[Route('/{id}/delete', name: 'app_admin_show_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(Show $show, Request $request, EntityManagerInterface $em, AuditLogger $audit): Response
     {
-        if ($this->isCsrfTokenValid('delete_show_' . $show->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete_show_' . $show->getId(), (string) $request->request->get('_token'))) {
             $title = $show->getTitle();
             $showId = $show->getId();
             if ($show->getImageName()) {
@@ -113,7 +114,7 @@ class ShowController extends AbstractController
         return $this->redirectToRoute('app_admin_show_index');
     }
 
-    private function handleImageUpload($form, Show $show, SluggerInterface $slugger): void
+    private function handleImageUpload(FormInterface $form, Show $show, SluggerInterface $slugger): void
     {
         /** @var UploadedFile|null $imageFile */
         $imageFile = $form->get('imageFile')->getData();

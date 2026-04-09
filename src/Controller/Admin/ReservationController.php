@@ -148,7 +148,8 @@ class ReservationController extends AbstractController
                 $this->addFlash('error', 'Veuillez saisir au moins une place.');
             } else {
                 $reservation->setStatus('validated');
-                $reservation->setCreatedBy($this->getUser());
+                $user = $this->getUser();
+                $reservation->setCreatedBy($user instanceof User ? $user : null);
                 $reservation->setToken(bin2hex(random_bytes(32)));
                 $reservation->setCreatedAt(new \DateTimeImmutable());
 
@@ -228,7 +229,7 @@ class ReservationController extends AbstractController
         Request $request,
         AuditLogger $audit,
     ): Response {
-        if ($this->isCsrfTokenValid('resend_email_' . $reservation->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('resend_email_' . $reservation->getId(), (string) $request->request->get('_token'))) {
             $mailer->sendConfirmation($reservation);
             $audit->log(
                 AuditLogger::RESERVATION_RESEND_EMAIL,
@@ -249,7 +250,7 @@ class ReservationController extends AbstractController
         ReservationService $reservationService,
         AuditLogger $audit,
     ): Response {
-        if ($this->isCsrfTokenValid('cancel_' . $reservation->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('cancel_' . $reservation->getId(), (string) $request->request->get('_token'))) {
             $reservationService->cancel($reservation);
             $audit->log(
                 AuditLogger::RESERVATION_CANCEL,
@@ -272,7 +273,7 @@ class ReservationController extends AbstractController
         ReservationMailer $mailer,
         AuditLogger $audit,
     ): Response {
-        if ($this->isCsrfTokenValid('refund_' . $reservation->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('refund_' . $reservation->getId(), (string) $request->request->get('_token'))) {
             $refunded = $helloAssoHandler->refund($reservation);
 
             if ($refunded) {

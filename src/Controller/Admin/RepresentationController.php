@@ -175,7 +175,7 @@ class RepresentationController extends AbstractController
     #[Route('/{id}/cancel', name: 'app_admin_representation_cancel', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function cancel(Representation $representation, Request $request, EntityManagerInterface $em, AuditLogger $audit): Response
     {
-        if ($this->isCsrfTokenValid('cancel_rep_' . $representation->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('cancel_rep_' . $representation->getId(), (string) $request->request->get('_token'))) {
             $representation->setStatus('cancelled');
             $em->flush();
             $audit->log(
@@ -193,7 +193,7 @@ class RepresentationController extends AbstractController
     #[Route('/{id}/duplicate', name: 'app_admin_representation_duplicate', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function duplicate(Representation $representation, Request $request, EntityManagerInterface $em): Response
     {
-        if (!$this->isCsrfTokenValid('duplicate_rep_' . $representation->getId(), $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('duplicate_rep_' . $representation->getId(), (string) $request->request->get('_token'))) {
             return $this->redirectToRoute('app_admin_representation_index');
         }
 

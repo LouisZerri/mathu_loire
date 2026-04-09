@@ -55,7 +55,7 @@ class AuditController extends AbstractController
         Request $request,
         AuditLogRepository $auditLogRepository,
     ): Response {
-        if (!$this->isCsrfTokenValid('audit_purge', $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('audit_purge', (string) $request->request->get('_token'))) {
             return $this->redirectToRoute('app_admin_audit_index');
         }
 

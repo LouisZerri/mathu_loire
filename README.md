@@ -355,7 +355,40 @@ php bin/console app:anonymize-reservations
 # Build assets
 npm run build      # production
 npm run watch      # développement avec watcher
+
+# Lancer les tests
+vendor/bin/phpunit                    # tous les tests
+vendor/bin/phpunit --testsuite Unit   # tests unitaires uniquement
+vendor/bin/phpunit --testsuite Functional  # tests fonctionnels uniquement
+vendor/bin/phpunit --testdox          # affichage lisible
+
+# Analyse statique PHP (level 7)
+vendor/bin/phpstan analyse
+
+# Lint PHP (syntaxe)
+vendor/bin/parallel-lint src/
+
+# Lint JavaScript
+npx eslint assets/
 ```
+
+---
+
+## Tests
+
+31 tests couvrant les règles métier critiques :
+
+| Suite | Tests | Ce qu'ils protègent |
+|---|---|---|
+| ReservationService | 7 | Calcul des prix, annulation + libération des sièges, création depuis draft |
+| HelloAssoPaymentHandler | 7 | Parsing webhook, enregistrement paiement, idempotence |
+| Security | 6 | Admin inaccessible sans login, pages publiques accessibles |
+| SelfCancel | 2 | Bouton annulation visible/caché selon règle 48h, token invalide rejeté |
+| Webhook | 5 | Payloads invalides rejetés, événements non-paiement ignorés |
+| ReservationCapacity | 1 | Jauge pleine → réservation refusée |
+| Commandes | 2 | Anonymisation RGPD et rappels J-2 s'exécutent sans erreur |
+
+Philosophie : chaque test protège contre un risque réel (perte d'argent, sur-réservation, faille de sécurité, incohérence de données). Pas de tests décoratifs.
 
 ---
 

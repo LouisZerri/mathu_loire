@@ -56,9 +56,6 @@ class AuditLogRepository extends ServiceEntityRepository
         return $qb;
     }
 
-    /**
-     * @return string[]
-     */
     public function purgeOlderThan(\DateTime $before): int
     {
         return (int) $this->createQueryBuilder('l')

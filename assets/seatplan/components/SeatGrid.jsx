@@ -1,9 +1,7 @@
 import React from 'react';
 import Seat from './Seat';
 
-const EMPTY_SEAT = <div className="w-10 h-6 mx-0.5" />;
-
-export default function SeatGrid({ seats, rows, seatMap, selectedReservation, onSeatClick, onSeatContextMenu }) {
+export default function SeatGrid({ seats, seatMap, selectedReservation, onSeatClick, onSeatContextMenu }) {
     const seatsByKey = {};
     seats.forEach(s => { seatsByKey[s.row + s.number] = s; });
 

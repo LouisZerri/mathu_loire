@@ -112,7 +112,7 @@ class UserController extends AbstractController
             return $this->redirectToRoute('app_admin_user_index');
         }
 
-        if ($this->isCsrfTokenValid('delete_user_' . $user->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete_user_' . $user->getId(), (string) $request->request->get('_token'))) {
             $email = $user->getEmail();
             $userId = $user->getId();
             $em->remove($user);
