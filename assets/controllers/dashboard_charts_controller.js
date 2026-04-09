@@ -4,12 +4,13 @@ export default class extends Controller {
     static values = {
         labels: Array,
         fillRates: Array,
-        revenues: Array,
-        places: Array,
-        capacities: Array,
         adults: Number,
         children: Number,
         invitations: Number,
+        cityLabels: Array,
+        cityValues: Array,
+        showLabels: Array,
+        showRevenues: Array,
     };
 
     async connect() {
@@ -68,71 +69,88 @@ export default class extends Controller {
             }),
         });
 
-        // Recettes
-        new Chart(this.element.querySelector('#chartRevenue'), {
-            type: 'bar',
-            data: {
-                labels: this.labelsValue,
-                datasets: [{
-                    data: this.revenuesValue,
-                    backgroundColor: 'rgb(17,24,39)',
-                    borderRadius: 4,
-                }],
-            },
-            options: Object.assign({}, defaultOptions, {
-                scales: Object.assign({}, defaultOptions.scales, {
-                    y: Object.assign({}, defaultOptions.scales.y, {
-                        ticks: { font: { size: 10 }, callback: function(v) { return v + ' €'; } }
+        // Répartition spectateurs (donut)
+        const donutCanvas = this.element.querySelector('#chartSpectators');
+        if (donutCanvas) {
+            const donutChart = new Chart(donutCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Adultes', 'Enfants', 'Invitations'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['rgb(17,24,39)', 'rgb(59,130,246)', 'rgb(249,115,22)'],
+                        borderWidth: 0,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 1500, easing: 'easeInOutCubic' },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16 } },
+                    },
+                },
+            });
+
+            setTimeout(() => {
+                donutChart.data.datasets[0].data = [this.adultsValue, this.childrenValue, this.invitationsValue];
+                donutChart.update();
+            }, 50);
+        }
+
+        // Provenance par ville (horizontal bar)
+        const cityCanvas = this.element.querySelector('#chartCities');
+        if (cityCanvas && this.cityLabelsValue.length > 0) {
+            const topLabels = this.cityLabelsValue.slice(0, 10);
+            const topValues = this.cityValuesValue.slice(0, 10);
+            const colors = [
+                'rgb(17,24,39)', 'rgb(59,130,246)', 'rgb(34,197,94)', 'rgb(249,115,22)',
+                'rgb(139,69,114)', 'rgb(234,179,8)', 'rgb(239,68,68)', 'rgb(16,185,129)',
+                'rgb(99,102,241)', 'rgb(168,85,247)',
+            ];
+
+            new Chart(cityCanvas, {
+                type: 'bar',
+                data: {
+                    labels: topLabels,
+                    datasets: [{
+                        data: topValues,
+                        backgroundColor: topLabels.map((_, i) => colors[i % colors.length]),
+                        borderRadius: 4,
+                    }],
+                },
+                options: Object.assign({}, defaultOptions, {
+                    indexAxis: 'y',
+                    scales: {
+                        x: { grid: { color: grayLight }, ticks: { font: { size: 10 } } },
+                        y: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    },
+                }),
+            });
+        }
+
+        // Recettes par spectacle
+        const showRevenueCanvas = this.element.querySelector('#chartShowRevenue');
+        if (showRevenueCanvas && this.showLabelsValue.length > 0) {
+            new Chart(showRevenueCanvas, {
+                type: 'bar',
+                data: {
+                    labels: this.showLabelsValue,
+                    datasets: [{
+                        data: this.showRevenuesValue,
+                        backgroundColor: 'rgb(17,24,39)',
+                        borderRadius: 4,
+                    }],
+                },
+                options: Object.assign({}, defaultOptions, {
+                    scales: Object.assign({}, defaultOptions.scales, {
+                        y: Object.assign({}, defaultOptions.scales.y, {
+                            ticks: { font: { size: 10 }, callback: function(v) { return v + ' €'; } }
+                        })
                     })
-                })
-            }),
-        });
+                }),
+            });
+        }
 
-        // Répartition spectateurs
-        const donutChart = new Chart(this.element.querySelector('#chartSpectators'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Adultes', 'Enfants', 'Invitations'],
-                datasets: [{
-                    data: [0, 0, 0],
-                    backgroundColor: ['rgb(17,24,39)', 'rgb(59,130,246)', 'rgb(249,115,22)'],
-                    borderWidth: 0,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutCubic',
-                },
-                plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16 } },
-                },
-            },
-        });
-
-        // Déclencher l'animation en mettant à jour les données après init
-        setTimeout(() => {
-            donutChart.data.datasets[0].data = [this.adultsValue, this.childrenValue, this.invitationsValue];
-            donutChart.update();
-        }, 50);
-
-        // Places vs capacité
-        new Chart(this.element.querySelector('#chartPlaces'), {
-            type: 'bar',
-            data: {
-                labels: this.labelsValue,
-                datasets: [
-                    { label: 'Réservées', data: this.placesValue, backgroundColor: 'rgb(34,197,94)', borderRadius: 4 },
-                    { label: 'Capacité', data: this.capacitiesValue, backgroundColor: grayLight, borderRadius: 4 },
-                ],
-            },
-            options: Object.assign({}, defaultOptions, {
-                plugins: {
-                    legend: { display: true, position: 'top', labels: { font: { size: 11 }, boxWidth: 12, padding: 16 } }
-                },
-            }),
-        });
     }
 }

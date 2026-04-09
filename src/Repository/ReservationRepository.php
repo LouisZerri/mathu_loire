@@ -82,6 +82,58 @@ class ReservationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return array{showTitle: string, revenue: float}[]
+     */
+    public function findRevenueByShow(?int $year = null): array
+    {
+        $qb = $this->createQueryBuilder('r')
+            ->select(
+                's.title as showTitle',
+                'SUM(r.nbAdults * rep.adultPrice + r.nbChildren * rep.childPrice) as revenue',
+            )
+            ->join('r.representation', 'rep')
+            ->join('rep.show', 's')
+            ->where('r.status = :status')
+            ->setParameter('status', 'validated')
+            ->groupBy('s.id, s.title')
+            ->orderBy('revenue', 'DESC');
+
+        if ($year) {
+            $qb->andWhere('rep.datetime >= :start AND rep.datetime < :end')
+               ->setParameter('start', new \DateTime($year . '-01-01'))
+               ->setParameter('end', new \DateTime(($year + 1) . '-01-01'));
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return array{city: string, count: int, totalPlaces: int}[]
+     */
+    public function findCityStats(?int $year = null): array
+    {
+        $qb = $this->createQueryBuilder('r')
+            ->select(
+                'r.spectatorCity as city',
+                'COUNT(r.id) as count',
+                'SUM(r.nbAdults + r.nbChildren + r.nbInvitations) as totalPlaces',
+            )
+            ->where('r.status = :status')
+            ->setParameter('status', 'validated')
+            ->groupBy('r.spectatorCity')
+            ->orderBy('totalPlaces', 'DESC');
+
+        if ($year) {
+            $qb->join('r.representation', 'rep')
+               ->andWhere('rep.datetime >= :start AND rep.datetime < :end')
+               ->setParameter('start', new \DateTime($year . '-01-01'))
+               ->setParameter('end', new \DateTime(($year + 1) . '-01-01'));
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function findByFilters(?Representation $representation = null, ?string $status = null, int $page = 1, int $limit = 20, ?int $year = null, ?string $search = null): array
     {
         $qb = $this->createQueryBuilder('r')

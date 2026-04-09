@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Repository\RepresentationRepository;
+use App\Repository\ReservationRepository;
 use App\Service\DashboardService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,6 +18,7 @@ class DashboardController extends AbstractController
         Request $request,
         DashboardService $dashboardService,
         RepresentationRepository $representationRepository,
+        ReservationRepository $reservationRepository,
     ): Response {
         $availableYears = $representationRepository->findAvailableYears();
         $currentYear = (int) date('Y');
@@ -32,10 +34,14 @@ class DashboardController extends AbstractController
 
         $seasonStats = $dashboardService->getSeasonStats($selectedYear);
         $repStats = $dashboardService->getRepresentationStats($selectedYear);
+        $cityStats = $reservationRepository->findCityStats($selectedYear);
+        $revenueByShow = $reservationRepository->findRevenueByShow($selectedYear);
 
         return $this->render('admin/dashboard.html.twig', [
             'seasonStats' => $seasonStats,
             'repStats' => $repStats,
+            'cityStats' => $cityStats,
+            'revenueByShow' => $revenueByShow,
             'availableYears' => $availableYears,
             'selectedYear' => $selectedYear,
         ]);

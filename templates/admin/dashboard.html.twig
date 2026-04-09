@@ -26,26 +26,21 @@
 
 {% set chartLabels = [] %}
 {% set chartFillRates = [] %}
-{% set chartRevenues = [] %}
-{% set chartPlaces = [] %}
-{% set chartCapacities = [] %}
 {% for rep in repStats %}
     {% set chartLabels = chartLabels|merge([rep.showTitle ~ ' ' ~ rep.datetime|format_datetime(pattern='d/MM', locale='fr', timezone='Europe/Paris')]) %}
     {% set chartFillRates = chartFillRates|merge([rep.fillRate]) %}
-    {% set chartRevenues = chartRevenues|merge([rep.revenue]) %}
-    {% set chartPlaces = chartPlaces|merge([rep.totalPlaces]) %}
-    {% set chartCapacities = chartCapacities|merge([rep.venueCapacity]) %}
 {% endfor %}
 
 <div data-controller="dashboard-charts"
      data-dashboard-charts-labels-value="{{ chartLabels|json_encode }}"
      data-dashboard-charts-fill-rates-value="{{ chartFillRates|json_encode }}"
-     data-dashboard-charts-revenues-value="{{ chartRevenues|json_encode }}"
-     data-dashboard-charts-places-value="{{ chartPlaces|json_encode }}"
-     data-dashboard-charts-capacities-value="{{ chartCapacities|json_encode }}"
      data-dashboard-charts-adults-value="{{ seasonStats.totalAdults }}"
      data-dashboard-charts-children-value="{{ seasonStats.totalChildren }}"
-     data-dashboard-charts-invitations-value="{{ seasonStats.totalInvitations }}">
+     data-dashboard-charts-invitations-value="{{ seasonStats.totalInvitations }}"
+     data-dashboard-charts-city-labels-value="{{ cityStats|map(s => s.city)|json_encode }}"
+     data-dashboard-charts-city-values-value="{{ cityStats|map(s => s.totalPlaces)|json_encode }}"
+     data-dashboard-charts-show-labels-value="{{ revenueByShow|map(s => s.showTitle)|json_encode }}"
+     data-dashboard-charts-show-revenues-value="{{ revenueByShow|map(s => s.revenue)|json_encode }}">
 
     <div class="grid lg:grid-cols-2 gap-6 mb-8">
         <div class="bg-white border border-gray-200 rounded-lg p-6">
@@ -55,12 +50,14 @@
             </div>
         </div>
 
+        {% if cityStats|length > 0 %}
         <div class="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 class="text-sm font-semibold text-gray-900 mb-4">Recettes par séance</h3>
+            <h3 class="text-sm font-semibold text-gray-900 mb-4">Provenance des spectateurs</h3>
             <div style="height: 250px;">
-                <canvas id="chartRevenue"></canvas>
+                <canvas id="chartCities"></canvas>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <div class="grid lg:grid-cols-2 gap-6 mb-8">
@@ -71,13 +68,16 @@
             </div>
         </div>
 
+        {% if revenueByShow|length > 0 %}
         <div class="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 class="text-sm font-semibold text-gray-900 mb-4">Places par séance</h3>
+            <h3 class="text-sm font-semibold text-gray-900 mb-4">Recettes par spectacle</h3>
             <div style="height: 250px;">
-                <canvas id="chartPlaces"></canvas>
+                <canvas id="chartShowRevenue"></canvas>
             </div>
         </div>
+        {% endif %}
     </div>
+
 </div>
 
 {% include 'components/admin/representation_stats.html.twig' with { repStats: repStats } %}
