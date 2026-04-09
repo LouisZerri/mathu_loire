@@ -8,7 +8,7 @@
     <p class="text-gray-500 mb-10">Choisissez un spectacle pour réserver vos places.</p>
 
     {% if grouped|length > 0 %}
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger" data-controller="reveal">
             {% for group in grouped %}
                 {% set show = group.show %}
                 {% set reps = group.representations %}
@@ -16,12 +16,12 @@
                 {% set nextRep = group.nextRep %}
                 {% set allFull = group.allFull %}
 
-                <a href="{{ path('app_show_detail', { id: show.id }) }}" class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow group flex flex-col relative">
+                <a href="{{ path('app_show_detail', { id: show.id }) }}" class="reveal bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow group flex flex-col relative">
                     {# Badge d'urgence en haut à gauche #}
                     {% if allFull %}
                         <span class="absolute top-3 left-3 z-10 px-2.5 py-1 bg-red-600 text-white text-xs font-semibold rounded-full shadow">Complet</span>
                     {% elseif nextRep.isAlmostFull %}
-                        <span class="absolute top-3 left-3 z-10 px-2.5 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full shadow">Dernières places !</span>
+                        <span class="absolute top-3 left-3 z-10 px-2.5 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full shadow animate-subtle-pulse">Dernières places !</span>
                     {% elseif nextRep.daysUntil is not null and nextRep.daysUntil <= 7 and nextRep.daysUntil >= 0 %}
                         <span class="absolute top-3 left-3 z-10 px-2.5 py-1 bg-gray-900 text-white text-xs font-semibold rounded-full shadow">
                             {% if nextRep.daysUntil == 0 %}Aujourd'hui

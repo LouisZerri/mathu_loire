@@ -50,32 +50,107 @@ class AuditLog
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
-    public function getUser(): ?User { return $this->user; }
-    public function setUser(?User $user): self { $this->user = $user; return $this; }
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+    
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+        return $this;
+    }
 
-    public function getUserEmail(): ?string { return $this->userEmail; }
-    public function setUserEmail(?string $e): self { $this->userEmail = $e; return $this; }
+    public function getUserEmail(): ?string
+    {
+        return $this->userEmail;
+    }
 
-    public function getAction(): ?string { return $this->action; }
-    public function setAction(string $a): self { $this->action = $a; return $this; }
+    public function setUserEmail(?string $e): self
+    {
+        $this->userEmail = $e;
+        return $this;
+    }
 
-    public function getTargetType(): ?string { return $this->targetType; }
-    public function setTargetType(?string $t): self { $this->targetType = $t; return $this; }
+    public function getAction(): ?string
+    {
+        return $this->action;
+    }
 
-    public function getTargetId(): ?int { return $this->targetId; }
-    public function setTargetId(?int $id): self { $this->targetId = $id; return $this; }
+    public function setAction(string $a): self
+    {
+        $this->action = $a;
+        return $this;
+    }
 
-    public function getSummary(): ?string { return $this->summary; }
-    public function setSummary(?string $s): self { $this->summary = $s; return $this; }
+    public function getTargetType(): ?string
+    {
+        return $this->targetType;
+    }
 
-    public function getDetails(): ?array { return $this->details; }
-    public function setDetails(?array $d): self { $this->details = $d; return $this; }
+    public function setTargetType(?string $t): self
+    {
+        $this->targetType = $t;
+        return $this;
+    }
 
-    public function getIpAddress(): ?string { return $this->ipAddress; }
-    public function setIpAddress(?string $ip): self { $this->ipAddress = $ip; return $this; }
+    public function getTargetId(): ?int
+    {
+        return $this->targetId;
+    }
 
-    public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
-    public function setCreatedAt(\DateTimeImmutable $d): self { $this->createdAt = $d; return $this; }
+    public function setTargetId(?int $id): self
+    {
+        $this->targetId = $id;
+        return $this;
+    }
+
+    public function getSummary(): ?string
+    {
+        return $this->summary;
+    }
+
+    public function setSummary(?string $s): self
+    {
+        $this->summary = $s;
+        return $this;
+    }
+
+    public function getDetails(): ?array
+    {
+        return $this->details;
+    }
+
+    public function setDetails(?array $d): self
+    {
+        $this->details = $d;
+        return $this;
+    }
+
+    public function getIpAddress(): ?string
+    {
+        return $this->ipAddress;
+    }
+
+    public function setIpAddress(?string $ip): self
+    {
+        $this->ipAddress = $ip;
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $d): self
+    {
+        $this->createdAt = $d;
+        return $this;
+    }
 }

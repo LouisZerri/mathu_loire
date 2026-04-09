@@ -5,6 +5,12 @@ button, [type="submit"], a[href] {
     cursor: pointer;
 }
 
+/* Smooth scroll global */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Fade-in au chargement */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -24,4 +30,54 @@ button, [type="submit"], a[href] {
     opacity: 0;
     transform: translateY(-10px);
     transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+}
+
+/* Fade-in au scroll (IntersectionObserver) */
+.reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered delay pour les enfants d'un conteneur */
+.reveal-stagger > .reveal:nth-child(1) { transition-delay: 0ms; }
+.reveal-stagger > .reveal:nth-child(2) { transition-delay: 80ms; }
+.reveal-stagger > .reveal:nth-child(3) { transition-delay: 160ms; }
+.reveal-stagger > .reveal:nth-child(4) { transition-delay: 240ms; }
+.reveal-stagger > .reveal:nth-child(5) { transition-delay: 320ms; }
+.reveal-stagger > .reveal:nth-child(6) { transition-delay: 400ms; }
+
+/* Pulse discret pour badges d'alerte */
+@keyframes subtlePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.animate-subtle-pulse {
+    animation: subtlePulse 2.5s ease-in-out infinite;
+}
+
+/* Hover lift pour les cartes */
+.hover-lift {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Pulse pour le badge notification sidebar */
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.animate-badge-pulse {
+    animation: badgePulse 2s ease-in-out infinite;
 }
