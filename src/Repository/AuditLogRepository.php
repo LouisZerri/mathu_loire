@@ -59,6 +59,16 @@ class AuditLogRepository extends ServiceEntityRepository
     /**
      * @return string[]
      */
+    public function purgeOlderThan(\DateTime $before): int
+    {
+        return (int) $this->createQueryBuilder('l')
+            ->delete()
+            ->where('l.createdAt < :before')
+            ->setParameter('before', $before)
+            ->getQuery()
+            ->execute();
+    }
+
     public function findDistinctActions(): array
     {
         $results = $this->createQueryBuilder('l')

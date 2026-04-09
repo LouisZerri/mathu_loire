@@ -4,7 +4,9 @@
 
 {% block body %}
 <section class="max-w-2xl mx-auto px-4 py-12">
-    <a href="{{ path('app_reservation_new', { id: reservation.representation.id, edit: reservation.id }) }}" class="text-sm text-gray-500 hover:text-gray-700 mb-6 inline-block">&larr; Modifier ma réservation</a>
+    {% include 'components/public/reservation_stepper.html.twig' with { currentStep: 2 } %}
+
+    <a href="{{ path('app_reservation_new', { id: representation.id }) }}" class="text-sm text-gray-500 hover:text-gray-700 mb-6 inline-block">&larr; Modifier ma réservation</a>
 
     <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div class="bg-gray-50 border-b border-gray-200 px-8 py-5">
@@ -15,12 +17,12 @@
             <div class="grid grid-cols-2 gap-6">
                 <div>
                     <span class="text-xs text-gray-400 uppercase tracking-wide">Spectacle</span>
-                    <p class="font-semibold text-gray-900 mt-1">{{ reservation.representation.show.title }}</p>
+                    <p class="font-semibold text-gray-900 mt-1">{{ representation.show.title }}</p>
                 </div>
                 <div>
                     <span class="text-xs text-gray-400 uppercase tracking-wide">Date</span>
-                    <p class="font-semibold text-gray-900 mt-1">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
-                    <p class="text-sm text-gray-500">à {{ reservation.representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</p>
+                    <p class="font-semibold text-gray-900 mt-1">{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
+                    <p class="text-sm text-gray-500">à {{ representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</p>
                 </div>
             </div>
 
@@ -35,26 +37,26 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% if reservation.nbAdults > 0 %}
+                        {% if draft.nbAdults > 0 %}
                         <tr class="border-b border-gray-50">
                             <td class="py-3 text-gray-900">Adulte</td>
-                            <td class="py-3 text-center text-gray-900">{{ reservation.nbAdults }}</td>
-                            <td class="py-3 text-right text-gray-500">{{ reservation.representation.adultPrice|number_format(2, ',', ' ') }} €</td>
-                            <td class="py-3 text-right font-medium text-gray-900">{{ (reservation.nbAdults * reservation.representation.adultPrice)|number_format(2, ',', ' ') }} €</td>
+                            <td class="py-3 text-center text-gray-900">{{ draft.nbAdults }}</td>
+                            <td class="py-3 text-right text-gray-500">{{ representation.adultPrice|number_format(2, ',', ' ') }} €</td>
+                            <td class="py-3 text-right font-medium text-gray-900">{{ (draft.nbAdults * representation.adultPrice)|number_format(2, ',', ' ') }} €</td>
                         </tr>
                         {% endif %}
-                        {% if reservation.nbChildren > 0 %}
+                        {% if draft.nbChildren > 0 %}
                         <tr class="border-b border-gray-50">
                             <td class="py-3 text-gray-900">Enfant</td>
-                            <td class="py-3 text-center text-gray-900">{{ reservation.nbChildren }}</td>
-                            <td class="py-3 text-right text-gray-500">{{ reservation.representation.childPrice|number_format(2, ',', ' ') }} €</td>
-                            <td class="py-3 text-right font-medium text-gray-900">{{ (reservation.nbChildren * reservation.representation.childPrice)|number_format(2, ',', ' ') }} €</td>
+                            <td class="py-3 text-center text-gray-900">{{ draft.nbChildren }}</td>
+                            <td class="py-3 text-right text-gray-500">{{ representation.childPrice|number_format(2, ',', ' ') }} €</td>
+                            <td class="py-3 text-right font-medium text-gray-900">{{ (draft.nbChildren * representation.childPrice)|number_format(2, ',', ' ') }} €</td>
                         </tr>
                         {% endif %}
                     </tbody>
                 </table>
 
-                {% if reservation.isPMR %}
+                {% if draft.isPMR %}
                 <p class="text-sm text-gray-500 mt-3">Personne à mobilité réduite : Oui</p>
                 {% endif %}
             </div>
@@ -68,21 +70,22 @@
                 <span class="text-xs text-gray-400 uppercase tracking-wide">Vos coordonnées</span>
                 <div class="mt-2 flex items-start justify-between">
                     <div>
-                        <p class="font-medium text-gray-900">{{ reservation.spectatorFirstName }} {{ reservation.spectatorLastName }}</p>
-                        <p class="text-sm text-gray-500 mt-0.5">{{ reservation.spectatorEmail }}</p>
-                        <p class="text-sm text-gray-500">{{ reservation.spectatorPhone }}</p>
+                        <p class="font-medium text-gray-900">{{ draft.firstName }} {{ draft.lastName }}</p>
+                        <p class="text-sm text-gray-500 mt-0.5">{{ draft.email }}</p>
+                        <p class="text-sm text-gray-500">{{ draft.phone }}</p>
                     </div>
-                    <p class="text-sm text-gray-500">{{ reservation.spectatorCity }}</p>
+                    <p class="text-sm text-gray-500">{{ draft.city }}</p>
                 </div>
             </div>
         </div>
 
         <div class="px-8 pb-8 pt-2">
-            <a href="{{ path('app_reservation_pay', { id: reservation.id, token: reservation.token }) }}"
+            <a href="{{ path('app_reservation_pay', { id: representation.id }) }}"
                class="block w-full bg-gray-900 text-white py-3.5 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-colors text-center">
                 Procéder au paiement — {{ total|number_format(2, ',', ' ') }} €
             </a>
             <p class="text-xs text-gray-400 text-center mt-3">Paiement sécurisé via HelloAsso</p>
+            <p class="text-xs text-gray-400 text-center mt-1">Une contribution à HelloAsso sera ajoutée lors du paiement (plateforme gratuite pour les associations).</p>
         </div>
     </div>
 </section>

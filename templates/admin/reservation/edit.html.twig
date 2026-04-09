@@ -27,7 +27,7 @@
 
 <div class="grid lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2">
-        {{ form_start(form, { attr: { class: 'space-y-6' } }) }}
+        {{ form_start(form, { attr: { class: 'space-y-6', onsubmit: 'return confirm("Enregistrer les modifications de la réservation #' ~ reservation.id ~ ' ?")' } }) }}
 
             {% include 'components/admin/reservation_form_representation.html.twig' with { form: form } %}
             {% include 'components/admin/reservation_form_places.html.twig' with { form: form } %}

@@ -91,8 +91,6 @@ class ReservationController extends AbstractController
         int $id,
         Request $request,
         RepresentationRepository $representationRepository,
-        ReservationRepository $reservationRepository,
-        ReservationService $reservationService,
     ): Response {
         $representation = $representationRepository->find($id);
 
@@ -100,7 +98,6 @@ class ReservationController extends AbstractController
             throw $this->createNotFoundException('Représentation non disponible.');
         }
 
-        // Vérifier la jauge
         $bookedMap = $representationRepository->findBookedPlacesMap();
         $booked = $bookedMap[$representation->getId()] ?? 0;
         $remaining = $representation->getMaxOnlineReservations() - $booked;
@@ -111,22 +108,23 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('app_show_detail', ['id' => $representation->getShow()->getId()]);
         }
 
-        // Reprendre une réservation pending existante si le spectateur revient modifier
-        $existingPendingId = $request->query->get('edit');
-        $reservation = null;
-        if ($existingPendingId) {
-            $reservation = $reservationRepository->findOneBy([
-                'id' => $existingPendingId,
-                'representation' => $representation,
-                'status' => 'pending',
-            ]);
+        $reservation = new Reservation();
+
+        // Pré-remplir depuis la session si on revient du récap
+        $session = $request->getSession();
+        $draft = $session->get('reservation_draft');
+        if ($draft && ($draft['representation_id'] ?? 0) === $id) {
+            $reservation->setNbAdults($draft['nbAdults'] ?? 0);
+            $reservation->setNbChildren($draft['nbChildren'] ?? 0);
+            $reservation->setIsPMR($draft['isPMR'] ?? false);
+            $reservation->setSpectatorLastName($draft['lastName'] ?? '');
+            $reservation->setSpectatorFirstName($draft['firstName'] ?? '');
+            $reservation->setSpectatorCity($draft['city'] ?? '');
+            $reservation->setSpectatorPhone($draft['phone'] ?? '');
+            $reservation->setSpectatorEmail($draft['email'] ?? '');
+            $reservation->setSpectatorComment($draft['comment'] ?? null);
         }
 
-        if (!$reservation) {
-            $reservation = new Reservation();
-        }
-
-        $isNew = $reservation->getId() === null;
         $form = $this->createForm(ReservationType::class, $reservation);
         $form->handleRequest($request);
 
@@ -145,17 +143,21 @@ class ReservationController extends AbstractController
                 return $this->redirectToRoute('app_reservation_new', ['id' => $id]);
             }
 
-            if ($isNew) {
-                $reservationService->create($reservation, $representation);
-            } else {
-                $reservation->setUpdatedAt(new \DateTimeImmutable());
-                $reservationService->save();
-            }
-
-            return $this->redirectToRoute('app_reservation_summary', [
-                'id' => $reservation->getId(),
-                'token' => $reservation->getToken(),
+            // Stocker en session au lieu de persister en BDD
+            $session->set('reservation_draft', [
+                'representation_id' => $id,
+                'nbAdults' => $reservation->getNbAdults(),
+                'nbChildren' => $reservation->getNbChildren(),
+                'isPMR' => $reservation->isPMR(),
+                'lastName' => $reservation->getSpectatorLastName(),
+                'firstName' => $reservation->getSpectatorFirstName(),
+                'city' => $reservation->getSpectatorCity(),
+                'phone' => $reservation->getSpectatorPhone(),
+                'email' => $reservation->getSpectatorEmail(),
+                'comment' => $reservation->getSpectatorComment(),
             ]);
+
+            return $this->redirectToRoute('app_reservation_summary', ['id' => $id]);
         }
 
         return $this->render('public/reservation/new.html.twig', [
@@ -164,79 +166,131 @@ class ReservationController extends AbstractController
         ]);
     }
 
-    #[Route('/recapitulatif/{id}/{token}', name: 'app_reservation_summary', requirements: ['id' => '\d+'])]
+    #[Route('/recapitulatif/{id}', name: 'app_reservation_summary', requirements: ['id' => '\d+'])]
     public function summary(
         int $id,
-        string $token,
-        ReservationRepository $reservationRepository,
-        ReservationService $reservationService,
+        Request $request,
+        RepresentationRepository $representationRepository,
     ): Response {
-        $reservation = $this->getReservationByToken($id, $token, $reservationRepository);
+        $draft = $request->getSession()->get('reservation_draft');
 
-        $total = $reservationService->computeTotal($reservation);
+        if (!$draft || ($draft['representation_id'] ?? 0) !== $id) {
+            return $this->redirectToRoute('app_reservation_new', ['id' => $id]);
+        }
+
+        $representation = $representationRepository->find($id);
+        if (!$representation) {
+            throw $this->createNotFoundException();
+        }
+
+        $total = ($draft['nbAdults'] * (float) $representation->getAdultPrice())
+               + ($draft['nbChildren'] * (float) $representation->getChildPrice());
 
         return $this->render('public/reservation/summary.html.twig', [
-            'reservation' => $reservation,
+            'draft' => $draft,
+            'representation' => $representation,
             'total' => $total,
         ]);
     }
 
-    #[Route('/payer/{id}/{token}', name: 'app_reservation_pay', requirements: ['id' => '\d+'])]
+    #[Route('/payer/{id}', name: 'app_reservation_pay', requirements: ['id' => '\d+'])]
     public function pay(
         int $id,
-        string $token,
-        ReservationRepository $reservationRepository,
-        ReservationService $reservationService,
+        Request $request,
+        RepresentationRepository $representationRepository,
         HelloAssoPaymentHandler $helloAssoHandler,
     ): Response {
-        $reservation = $this->getReservationByToken($id, $token, $reservationRepository);
+        $session = $request->getSession();
+        $draft = $session->get('reservation_draft');
 
-        if ($reservation->getStatus() !== 'pending') {
-            return $this->redirectToRoute('app_reservation_confirmation', [
-                'id' => $id,
-                'token' => $token,
-            ]);
+        if (!$draft || ($draft['representation_id'] ?? 0) !== $id) {
+            return $this->redirectToRoute('app_reservation_new', ['id' => $id]);
         }
 
-        $total = $reservationService->computeTotal($reservation);
-        $checkoutData = $helloAssoHandler->createCheckoutIntent($reservation, $total);
+        $representation = $representationRepository->find($id);
+        if (!$representation) {
+            throw $this->createNotFoundException();
+        }
 
-        $reservation->setCheckoutIntentId($checkoutData['id']);
-        $reservationService->save();
+        $total = ($draft['nbAdults'] * (float) $representation->getAdultPrice())
+               + ($draft['nbChildren'] * (float) $representation->getChildPrice());
+
+        // Générer un token unique pour identifier ce draft
+        $draftToken = bin2hex(random_bytes(32));
+        $draft['token'] = $draftToken;
+        $session->set('reservation_draft', $draft);
+
+        $checkoutData = $helloAssoHandler->createCheckoutIntentFromDraft($draft, $representation, $total, $draftToken);
+
+        $session->set('reservation_checkout_id', $checkoutData['id']);
 
         return $this->redirect($checkoutData['redirectUrl']);
     }
 
-    #[Route('/retour/{id}/{token}', name: 'app_reservation_return', requirements: ['id' => '\d+'])]
+    #[Route('/retour/{id}', name: 'app_reservation_return', requirements: ['id' => '\d+'])]
     public function return_(
         int $id,
-        string $token,
+        Request $request,
+        RepresentationRepository $representationRepository,
         ReservationRepository $reservationRepository,
         HelloAssoPaymentHandler $helloAssoHandler,
         ReservationService $reservationService,
         ReservationMailer $reservationMailer,
         LoggerInterface $logger,
     ): Response {
-        $reservation = $this->getReservationByToken($id, $token, $reservationRepository);
+        $session = $request->getSession();
+        $draft = $session->get('reservation_draft');
+        $checkoutId = $session->get('reservation_checkout_id');
 
-        if ($reservation->getStatus() === 'pending' && $reservation->getCheckoutIntentId()) {
-            $paid = $helloAssoHandler->handleReturn($reservation, $reservation->getCheckoutIntentId());
+        if (!$draft || !$checkoutId || ($draft['representation_id'] ?? 0) !== $id) {
+            $this->addFlash('error', 'Session expirée. Veuillez recommencer.');
 
-            if ($paid) {
-                $reservationService->confirm($reservation);
-                $reservationMailer->sendConfirmation($reservation);
-                $logger->info('Réservation #{id} confirmée via HelloAsso.', ['id' => $reservation->getId()]);
-            } else {
-                return $this->redirectToRoute('app_reservation_cancel', [
-                    'id' => $id,
-                    'token' => $token,
-                ]);
-            }
+            return $this->redirectToRoute('app_reservation_index');
         }
 
-        return $this->redirectToRoute('app_reservation_confirmation', [
-            'id' => $id,
-            'token' => $token,
+        $representation = $representationRepository->find($id);
+        if (!$representation) {
+            throw $this->createNotFoundException();
+        }
+
+        $paymentData = $helloAssoHandler->verifyCheckout($checkoutId);
+
+        if ($paymentData) {
+            // Vérifier qu'une résa n'existe pas déjà pour ce checkout (webhook arrivé avant)
+            $existing = $reservationRepository->findOneBy(['checkoutIntentId' => $checkoutId]);
+            if ($existing) {
+                $session->remove('reservation_draft');
+                $session->remove('reservation_checkout_id');
+
+                return $this->redirectToRoute('app_reservation_confirmation', [
+                    'id' => $existing->getId(),
+                    'token' => $existing->getToken(),
+                ]);
+            }
+
+            // Créer la résa en BDD maintenant que le paiement est confirmé
+            $reservation = $reservationService->createFromDraft($draft, $representation);
+            $reservation->setCheckoutIntentId($checkoutId);
+            $helloAssoHandler->recordPayment($reservation, $paymentData);
+            $reservationService->confirm($reservation);
+            $reservationMailer->sendConfirmation($reservation);
+            $logger->info('Réservation #{id} créée et confirmée après paiement HelloAsso.', ['id' => $reservation->getId()]);
+
+            // Nettoyer la session
+            $session->remove('reservation_draft');
+            $session->remove('reservation_checkout_id');
+
+            return $this->redirectToRoute('app_reservation_confirmation', [
+                'id' => $reservation->getId(),
+                'token' => $reservation->getToken(),
+            ]);
+        }
+
+        // Paiement échoué
+        $session->remove('reservation_checkout_id');
+
+        return $this->render('public/reservation/cancel.html.twig', [
+            'representation' => $representation,
         ]);
     }
 
@@ -250,21 +304,21 @@ class ReservationController extends AbstractController
         ]);
     }
 
-    #[Route('/annulation/{id}/{token}', name: 'app_reservation_cancel', requirements: ['id' => '\d+'])]
+    #[Route('/annulation-paiement/{id}', name: 'app_reservation_cancel', requirements: ['id' => '\d+'])]
     public function cancel(
         int $id,
-        string $token,
-        ReservationRepository $reservationRepository,
-        ReservationService $reservationService,
+        Request $request,
+        RepresentationRepository $representationRepository,
     ): Response {
-        $reservation = $this->getReservationByToken($id, $token, $reservationRepository);
+        $representation = $representationRepository->find($id);
 
-        if ($reservation->getStatus() === 'pending') {
-            $reservationService->cancel($reservation);
-        }
+        // Nettoyer la session
+        $session = $request->getSession();
+        $session->remove('reservation_draft');
+        $session->remove('reservation_checkout_id');
 
         return $this->render('public/reservation/cancel.html.twig', [
-            'reservation' => $reservation,
+            'representation' => $representation,
         ]);
     }
 

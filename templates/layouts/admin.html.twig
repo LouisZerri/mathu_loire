@@ -6,11 +6,16 @@
             <a href="{{ path('app_admin_dashboard') }}">
                 <img src="{{ asset('images/matu-loire-logo-couleur-sans-fond2-11.png') }}" alt="Les Mathu'Loire" class="h-8">
             </a>
-            <button data-action="admin-sidebar#toggle" class="p-2 text-gray-600 hover:text-gray-900">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+                <a href="{{ path('app_logout') }}" class="p-2 text-gray-400 hover:text-gray-600" title="Déconnexion">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </a>
+                <button data-action="admin-sidebar#toggle" class="p-2 text-gray-600 hover:text-gray-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <div class="flex">

@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Repository\RepresentationRepository;
+use App\Repository\ReservationRepository;
 use App\Service\HelloAssoPaymentHandler;
 use App\Service\ReservationMailer;
 use App\Service\ReservationService;
@@ -19,6 +21,8 @@ class WebhookController extends AbstractController
         HelloAssoPaymentHandler $helloAssoHandler,
         ReservationService $reservationService,
         ReservationMailer $reservationMailer,
+        RepresentationRepository $representationRepository,
+        ReservationRepository $reservationRepository,
         LoggerInterface $logger,
     ): Response {
         $data = json_decode($request->getContent(), true);
@@ -28,13 +32,51 @@ class WebhookController extends AbstractController
         }
 
         try {
-            $reservation = $helloAssoHandler->handleNotification($data);
+            $paymentInfo = $helloAssoHandler->handleNotification($data);
 
-            if ($reservation) {
-                $reservationService->confirm($reservation);
-                $reservationMailer->sendConfirmation($reservation);
-                $logger->info('Réservation #{id} confirmée via HelloAsso.', ['id' => $reservation->getId()]);
+            if (!$paymentInfo) {
+                return new Response('OK', Response::HTTP_OK);
             }
+
+            // Vérifier si une résa existe déjà pour ce checkout (créée par le return)
+            $checkoutIntentId = $data['data']['meta']['checkoutIntentId'] ?? $paymentInfo['transaction_id'];
+            $existing = $reservationRepository->findOneBy(['checkoutIntentId' => $checkoutIntentId]);
+            if ($existing) {
+                $logger->info('Webhook: réservation déjà traitée pour checkout {id}', ['id' => $checkoutIntentId]);
+
+                return new Response('OK', Response::HTTP_OK);
+            }
+
+            // Créer la résa depuis les données webhook (filet de sécurité si le return a raté)
+            $representation = $representationRepository->find($paymentInfo['representation_id']);
+            if (!$representation) {
+                $logger->warning('Webhook: représentation {id} introuvable', ['id' => $paymentInfo['representation_id']]);
+
+                return new Response('OK', Response::HTTP_OK);
+            }
+
+            $payer = $paymentInfo['payer'] ?? [];
+            $draft = [
+                'nbAdults' => 1,
+                'nbChildren' => 0,
+                'isPMR' => false,
+                'lastName' => $payer['lastName'] ?? 'Inconnu',
+                'firstName' => $payer['firstName'] ?? 'Inconnu',
+                'city' => '',
+                'phone' => '',
+                'email' => $payer['email'] ?? '',
+                'comment' => 'Créée automatiquement via webhook HelloAsso',
+            ];
+
+            $reservation = $reservationService->createFromDraft($draft, $representation);
+            $reservation->setCheckoutIntentId((int) $checkoutIntentId);
+            $helloAssoHandler->recordPayment($reservation, [
+                'amount' => $paymentInfo['amount'] * 100,
+                'id' => $paymentInfo['transaction_id'],
+            ]);
+            $reservationService->confirm($reservation);
+            $reservationMailer->sendConfirmation($reservation);
+            $logger->info('Réservation #{id} créée via webhook HelloAsso.', ['id' => $reservation->getId()]);
         } catch (\Exception $e) {
             $logger->error('Webhook HelloAsso échoué : {message}', ['message' => $e->getMessage()]);
 

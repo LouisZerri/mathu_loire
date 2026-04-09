@@ -25,6 +25,30 @@ class ReservationService
         $this->em->flush();
     }
 
+    public function createFromDraft(array $draft, Representation $representation): Reservation
+    {
+        $reservation = new Reservation();
+        $reservation->setRepresentation($representation);
+        $reservation->setStatus('pending');
+        $reservation->setNbAdults((int) ($draft['nbAdults'] ?? 0));
+        $reservation->setNbChildren((int) ($draft['nbChildren'] ?? 0));
+        $reservation->setNbInvitations(0);
+        $reservation->setIsPMR((bool) ($draft['isPMR'] ?? false));
+        $reservation->setSpectatorLastName($draft['lastName'] ?? '');
+        $reservation->setSpectatorFirstName($draft['firstName'] ?? '');
+        $reservation->setSpectatorCity($draft['city'] ?? '');
+        $reservation->setSpectatorPhone($draft['phone'] ?? '');
+        $reservation->setSpectatorEmail($draft['email'] ?? '');
+        $reservation->setSpectatorComment($draft['comment'] ?? null);
+        $reservation->setToken(bin2hex(random_bytes(32)));
+        $reservation->setCreatedAt(new \DateTimeImmutable());
+
+        $this->em->persist($reservation);
+        $this->em->flush();
+
+        return $reservation;
+    }
+
     public function save(): void
     {
         $this->em->flush();

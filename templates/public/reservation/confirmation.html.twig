@@ -3,7 +3,8 @@
 {% block title %}Réservation confirmée - Les Mathu'Loire{% endblock %}
 
 {% block body %}
-<section class="max-w-3xl mx-auto px-4 py-16 text-center">
+<section class="max-w-3xl mx-auto px-4 pt-8 pb-16 text-center">
+    {% include 'components/public/reservation_stepper.html.twig' with { currentStep: 3 } %}
     <div class="bg-white border border-gray-200 rounded-lg p-8">
         <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

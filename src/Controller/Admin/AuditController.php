@@ -49,4 +49,22 @@ class AuditController extends AbstractController
             'total' => $total,
         ]);
     }
+
+    #[Route('/purge', name: 'app_admin_audit_purge', methods: ['POST'])]
+    public function purge(
+        Request $request,
+        AuditLogRepository $auditLogRepository,
+    ): Response {
+        if (!$this->isCsrfTokenValid('audit_purge', $request->request->get('_token'))) {
+            return $this->redirectToRoute('app_admin_audit_index');
+        }
+
+        $months = (int) $request->request->get('months', 6);
+        $before = new \DateTime("-{$months} months");
+        $deleted = $auditLogRepository->purgeOlderThan($before);
+
+        $this->addFlash('success', sprintf('%d entrée(s) de plus de %d mois supprimée(s).', $deleted, $months));
+
+        return $this->redirectToRoute('app_admin_audit_index');
+    }
 }

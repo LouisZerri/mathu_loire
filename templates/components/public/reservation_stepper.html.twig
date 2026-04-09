@@ -1,0 +1,25 @@
+<div class="flex items-center justify-center mb-8">
+    {% set steps = [
+        { label: 'Réservation', num: 1 },
+        { label: 'Récapitulatif', num: 2 },
+        { label: 'Confirmation', num: 3 },
+    ] %}
+
+    {% for step in steps %}
+        {% if not loop.first %}
+            <div class="w-12 sm:w-20 h-px {{ currentStep >= step.num ? 'bg-gray-900' : 'bg-gray-300' }}"></div>
+        {% endif %}
+
+        <div class="flex flex-col items-center">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
+                {{ currentStep > step.num ? 'bg-gray-900 text-white' : (currentStep == step.num ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-500') }}">
+                {% if currentStep > step.num %}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                {% else %}
+                    {{ step.num }}
+                {% endif %}
+            </div>
+            <span class="text-xs mt-1.5 {{ currentStep >= step.num ? 'text-gray-900 font-medium' : 'text-gray-400' }} hidden sm:block">{{ step.label }}</span>
+        </div>
+    {% endfor %}
+</div>

@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Payment;
+use App\Entity\Representation;
 use App\Entity\Reservation;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -85,6 +86,89 @@ class HelloAssoPaymentHandler
         return $data;
     }
 
+    public function createCheckoutIntentFromDraft(array $draft, Representation $representation, float $total, string $draftToken): array
+    {
+        $token = $this->authenticate();
+
+        $backUrl = $this->baseUrl . $this->urlGenerator->generate(
+            'app_reservation_cancel',
+            ['id' => $representation->getId()]
+        );
+        $returnUrl = $this->baseUrl . $this->urlGenerator->generate(
+            'app_reservation_return',
+            ['id' => $representation->getId()]
+        );
+
+        $this->logger->info('HelloAsso URLs - back: {back} return: {return}', ['back' => $backUrl, 'return' => $returnUrl]);
+
+        $response = $this->httpClient->request('POST', $this->getApiUrl() . '/organizations/' . $this->organizationSlug . '/checkout-intents', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'totalAmount' => (int) ($total * 100),
+                'initialAmount' => (int) ($total * 100),
+                'itemName' => $representation->getShow()->getTitle() . ' - ' . $representation->getDatetime()->format('d/m/Y H:i'),
+                'backUrl' => $backUrl,
+                'errorUrl' => $backUrl,
+                'returnUrl' => $returnUrl,
+                'containsDonation' => false,
+                'metadata' => [
+                    'draft_token' => $draftToken,
+                    'representation_id' => (string) $representation->getId(),
+                ],
+                'payer' => [
+                    'firstName' => $draft['firstName'] ?? '',
+                    'lastName' => $draft['lastName'] ?? '',
+                    'email' => $draft['email'] ?? '',
+                ],
+            ],
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            $errorBody = $response->getContent(false);
+            $this->logger->error('HelloAsso checkout error: {body}', ['body' => $errorBody]);
+            throw new \RuntimeException('HelloAsso checkout failed: ' . $errorBody);
+        }
+
+        $data = $response->toArray(false);
+        $this->logger->info('HelloAsso checkout intent créé : {id}', ['id' => $data['id']]);
+
+        return $data;
+    }
+
+    public function verifyCheckout(int $checkoutIntentId): ?array
+    {
+        $data = $this->getCheckoutIntent($checkoutIntentId);
+
+        if (!isset($data['order']['payments'][0])) {
+            return null;
+        }
+
+        $paymentData = $data['order']['payments'][0];
+
+        if ($paymentData['state'] !== 'Authorized') {
+            return null;
+        }
+
+        return $paymentData;
+    }
+
+    public function recordPayment(Reservation $reservation, array $paymentData): void
+    {
+        $payment = new Payment();
+        $payment->setReservation($reservation);
+        $payment->setMethod('helloasso');
+        $payment->setAmount((string) ($paymentData['amount'] / 100));
+        $payment->setType('payment');
+        $payment->setTransactionId((string) $paymentData['id']);
+        $payment->setCreatedAt(new \DateTimeImmutable());
+
+        $this->em->persist($payment);
+        $this->em->flush();
+    }
+
     public function getCheckoutIntent(int $checkoutIntentId): array
     {
         $token = $this->authenticate();
@@ -164,38 +248,29 @@ class HelloAssoPaymentHandler
         return false;
     }
 
-    public function handleNotification(array $data): ?Reservation
+    public function handleNotification(array $data): ?array
     {
         if (($data['eventType'] ?? '') !== 'Payment') {
             return null;
         }
 
+        $paymentInfo = $data['data'] ?? [];
         $metadata = $data['metadata'] ?? [];
-        $reservationId = $metadata['reservation_id'] ?? null;
+        $representationId = $metadata['representation_id'] ?? null;
 
-        if (!$reservationId) {
+        if (!$representationId) {
             return null;
         }
 
-        $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
+        $amount = ($paymentInfo['amount'] ?? 0) / 100;
 
-        if (!$reservation || $reservation->getStatus() !== 'pending') {
-            return null;
-        }
-
-        $amount = ($data['data']['amount'] ?? 0) / 100;
-
-        $payment = new Payment();
-        $payment->setReservation($reservation);
-        $payment->setMethod('helloasso');
-        $payment->setAmount((string) $amount);
-        $payment->setType('payment');
-        $payment->setTransactionId((string) ($data['data']['id'] ?? ''));
-        $payment->setCreatedAt(new \DateTimeImmutable());
-
-        $this->em->persist($payment);
-
-        return $reservation;
+        return [
+            'representation_id' => (int) $representationId,
+            'draft_token' => $metadata['draft_token'] ?? null,
+            'amount' => $amount,
+            'transaction_id' => (string) ($paymentInfo['id'] ?? ''),
+            'payer' => $paymentInfo['payer'] ?? [],
+        ];
     }
 
     private function authenticate(): string

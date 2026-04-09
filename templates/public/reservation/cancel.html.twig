@@ -1,6 +1,6 @@
 {% extends 'layouts/public.html.twig' %}
 
-{% block title %}Réservation annulée - Les Mathu'Loire{% endblock %}
+{% block title %}Paiement annulé - Les Mathu'Loire{% endblock %}
 
 {% block body %}
 <section class="max-w-3xl mx-auto px-4 py-16 text-center">
@@ -14,11 +14,12 @@
         <h1 class="text-2xl font-semibold text-gray-900 mb-2">Paiement annulé</h1>
         <p class="text-gray-500 mb-6">Votre réservation n'a pas été validée. Aucun montant n'a été débité.</p>
 
-        <a href="{{ path('app_reservation_new', { id: reservation.representation.id }) }}"
-           {% if reservation.representation.status != 'active' %}style="display:none"{% endif %}
+        {% if representation is defined and representation %}
+        <a href="{{ path('app_reservation_new', { id: representation.id }) }}"
            class="inline-block bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
             Réessayer
         </a>
+        {% endif %}
 
         <div class="mt-4">
             <a href="{{ path('app_home') }}" class="text-sm text-gray-500 hover:text-gray-700">

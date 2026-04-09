@@ -21,14 +21,18 @@ class ReservationType extends AbstractType
         $builder
             ->add('nbAdults', IntegerType::class, [
                 'label' => 'Nombre d\'adultes',
+                'required' => false,
                 'attr' => ['min' => 0, 'max' => 20],
+                'empty_data' => '0',
                 'constraints' => [
                     new Assert\GreaterThanOrEqual(0),
                 ],
             ])
             ->add('nbChildren', IntegerType::class, [
                 'label' => 'Nombre d\'enfants (- de 12 ans)',
+                'required' => false,
                 'attr' => ['min' => 0, 'max' => 20],
+                'empty_data' => '0',
                 'constraints' => [
                     new Assert\GreaterThanOrEqual(0),
                 ],
