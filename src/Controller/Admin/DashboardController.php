@@ -8,9 +8,11 @@ use App\Service\DashboardService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/admin')]
+#[IsGranted('ROLE_BILLETTISTE')]
 class DashboardController extends AbstractController
 {
     #[Route('/', name: 'app_admin_dashboard')]

@@ -9,14 +9,18 @@ use App\Service\ReservationMailer;
 use App\Service\ReservationService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class WebhookController extends AbstractController
 {
-    #[Route('/webhook/helloasso', name: 'app_webhook_helloasso', methods: ['POST'])]
+    #[Route('/webhook/helloasso/{secret}', name: 'app_webhook_helloasso', methods: ['POST'])]
     public function helloasso(
+        string $secret,
+        #[Autowire('%env(HELLOASSO_WEBHOOK_SECRET)%')]
+        string $webhookSecret,
         Request $request,
         HelloAssoPaymentHandler $helloAssoHandler,
         ReservationService $reservationService,
@@ -25,6 +29,12 @@ class WebhookController extends AbstractController
         ReservationRepository $reservationRepository,
         LoggerInterface $logger,
     ): Response {
+        if (!hash_equals($webhookSecret, $secret)) {
+            $logger->warning('Webhook HelloAsso: secret invalide');
+
+            return new Response('Forbidden', Response::HTTP_FORBIDDEN);
+        }
+
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
@@ -45,6 +55,14 @@ class WebhookController extends AbstractController
                 $logger->info('Webhook: réservation déjà traitée pour checkout {id}', ['id' => $checkoutIntentId]);
 
                 return new Response('OK', Response::HTTP_OK);
+            }
+
+            // Vérifier auprès de l'API HelloAsso que le paiement est réel
+            $verifiedPayment = $helloAssoHandler->verifyPaymentExists($paymentInfo['transaction_id']);
+            if (!$verifiedPayment) {
+                $logger->warning('Webhook: paiement {id} non vérifié auprès de HelloAsso', ['id' => $paymentInfo['transaction_id']]);
+
+                return new Response('Payment not verified', Response::HTTP_FORBIDDEN);
             }
 
             // Créer la résa depuis les données webhook (filet de sécurité si le return a raté)

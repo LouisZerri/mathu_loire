@@ -169,6 +169,31 @@ class HelloAssoPaymentHandler
         $this->em->flush();
     }
 
+    public function verifyPaymentExists(string $paymentId): bool
+    {
+        try {
+            $token = $this->authenticate();
+
+            $response = $this->httpClient->request('GET', $this->getApiUrl() . '/payments/' . $paymentId, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                ],
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                return false;
+            }
+
+            $data = $response->toArray(false);
+
+            return ($data['state'] ?? '') === 'Authorized';
+        } catch (\Throwable $e) {
+            $this->logger->error('HelloAsso payment verification failed: {message}', ['message' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
     public function getCheckoutIntent(int $checkoutIntentId): array
     {
         $token = $this->authenticate();

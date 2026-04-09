@@ -17,8 +17,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/reservations')]
+#[IsGranted('ROLE_BILLETTISTE')]
 class ReservationController extends AbstractController
 {
     #[Route('/', name: 'app_admin_reservation_index')]
@@ -109,12 +111,12 @@ class ReservationController extends AbstractController
                 "%d;%s;%s;%s;%s;%s;%s;%s;%s;%d;%d;%d;%s;%s;%s\n",
                 $r->getId(),
                 $r->getStatus(),
-                str_replace(';', ',', $r->getSpectatorLastName()),
-                str_replace(';', ',', $r->getSpectatorFirstName()),
-                str_replace(';', ',', $r->getSpectatorCity()),
-                $r->getSpectatorPhone(),
-                $r->getSpectatorEmail(),
-                str_replace(';', ',', $rep->getShow()->getTitle()),
+                $this->csvSafe($r->getSpectatorLastName()),
+                $this->csvSafe($r->getSpectatorFirstName()),
+                $this->csvSafe($r->getSpectatorCity()),
+                $this->csvSafe($r->getSpectatorPhone()),
+                $this->csvSafe($r->getSpectatorEmail()),
+                $this->csvSafe($rep->getShow()->getTitle()),
                 $rep->getDatetime()->format('d/m/Y H:i'),
                 $r->getNbAdults(),
                 $r->getNbChildren(),
@@ -295,6 +297,17 @@ class ReservationController extends AbstractController
     }
 
     #[Route('/{id}/print', name: 'app_admin_reservation_print', requirements: ['id' => '\d+'])]
+    private function csvSafe(string $value): string
+    {
+        $value = str_replace(';', ',', $value);
+
+        if (isset($value[0]) && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            $value = "'" . $value;
+        }
+
+        return $value;
+    }
+
     public function print(
         Reservation $reservation,
         TicketThermalPdfGenerator $pdfGenerator,

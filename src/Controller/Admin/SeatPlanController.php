@@ -12,8 +12,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/plan-de-salle')]
+#[IsGranted('ROLE_BILLETTISTE')]
 class SeatPlanController extends AbstractController
 {
     #[Route('/', name: 'app_admin_seatplan')]
