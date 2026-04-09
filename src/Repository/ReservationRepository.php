@@ -56,6 +56,32 @@ class ReservationRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * @return Reservation[]
+     */
+    public function findForReminder(\DateTime $targetDate): array
+    {
+        $start = (clone $targetDate)->setTime(0, 0, 0);
+        $end = (clone $targetDate)->setTime(23, 59, 59);
+
+        return $this->createQueryBuilder('r')
+            ->join('r.representation', 'rep')
+            ->join('rep.show', 's')
+            ->addSelect('rep', 's')
+            ->where('rep.datetime >= :start')
+            ->andWhere('rep.datetime <= :end')
+            ->andWhere('r.status = :status')
+            ->andWhere('rep.status = :repStatus')
+            ->andWhere('r.reminderSentAt IS NULL')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('status', 'validated')
+            ->setParameter('repStatus', 'active')
+            ->orderBy('rep.datetime', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findByFilters(?Representation $representation = null, ?string $status = null, int $page = 1, int $limit = 20, ?int $year = null, ?string $search = null): array
     {
         $qb = $this->createQueryBuilder('r')

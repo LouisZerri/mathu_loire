@@ -99,6 +99,9 @@ class Reservation
     #[ORM\Column(length: 64)]
     private ?string $token = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $reminderSentAt = null;
+
     public function __construct()
     {
         $this->seatAssignments = new ArrayCollection();
@@ -382,6 +385,18 @@ class Reservation
     public function setToken(string $token): static
     {
         $this->token = $token;
+
+        return $this;
+    }
+
+    public function getReminderSentAt(): ?\DateTimeImmutable
+    {
+        return $this->reminderSentAt;
+    }
+
+    public function setReminderSentAt(?\DateTimeImmutable $reminderSentAt): static
+    {
+        $this->reminderSentAt = $reminderSentAt;
 
         return $this;
     }

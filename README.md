@@ -106,6 +106,15 @@ L'application gère l'ensemble du cycle de vie des réservations : vente en lign
 - Rôles : Admin / Billettiste
 - Protection contre l'auto-suppression
 
+#### Journal d'audit (admin only)
+- Historique de toutes les actions admin (login, CRUD réservations/représentations/spectacles/utilisateurs)
+- Filtrable par utilisateur, type d'action, plage de dates
+- Traçage des tentatives de connexion échouées (IP, email tenté)
+
+#### Notifications
+- Badge en temps réel sur le menu "Réservations" (nouvelles résas depuis la dernière visite)
+- Rappels J-2 automatiques par email aux spectateurs (commande cron)
+
 #### Authentification
 - Login natif Symfony (form_login + CSRF)
 - Mot de passe oublié (token expirant 1h, email sécurisé)
@@ -115,6 +124,7 @@ L'application gère l'ensemble du cycle de vie des réservations : vente en lign
 
 - **Rapport journalier** envoyé par email aux admins/billettistes (cron)
 - **Plans de salle** joints au rapport (1 PDF par séance à venir)
+- **Rappel J-2** par email aux spectateurs 2 jours avant leur représentation (cron)
 - **Anonymisation RGPD** des réservations de plus de 12 mois (cron)
 
 ---
@@ -127,7 +137,8 @@ L'application gère l'ensemble du cycle de vie des réservations : vente en lign
 src/
 ├── Command/                    # Commandes console (cron)
 │   ├── AnonymizeOldReservationsCommand.php
-│   └── SendDailyReportCommand.php
+│   ├── SendDailyReportCommand.php
+│   └── SendRemindersCommand.php
 │
 ├── Controller/                 # Controllers HTTP
 │   ├── Admin/                  # Back-office
@@ -136,7 +147,8 @@ src/
 │   │   ├── ShowController.php
 │   │   ├── RepresentationController.php
 │   │   ├── SeatPlanController.php
-│   │   └── UserController.php
+│   │   ├── UserController.php
+│   │   └── AuditController.php
 │   ├── HomeController.php
 │   ├── ShowController.php
 │   ├── ReservationController.php
@@ -152,17 +164,21 @@ src/
 │   ├── RepresentationFixtures.php
 │   ├── ReservationFixtures.php
 │   ├── SeatAssignmentFixtures.php
-│   └── PaymentFixtures.php
+│   ├── PaymentFixtures.php
+│   └── AuditLogFixtures.php
 │
-├── Entity/                     # 7 entités Doctrine
+├── Entity/                     # 8 entités Doctrine
 │   ├── User.php
 │   ├── Show.php
 │   ├── Representation.php
 │   ├── Reservation.php
 │   ├── Seat.php
 │   ├── SeatAssignment.php
-│   └── Payment.php
+│   ├── Payment.php
+│   └── AuditLog.php
 │
+├── EventListener/              # Listeners Symfony
+│   └── AuditLoginListener.php       # Audit login/logout
 ├── Form/                       # Form types
 ├── Repository/                 # Repositories Doctrine
 └── Service/                    # Services métier
@@ -172,6 +188,7 @@ src/
     ├── HelloAssoPaymentHandler.php
     ├── DashboardService.php
     ├── ReportService.php
+    ├── AuditLogger.php
     ├── TicketPdfGenerator.php           # Billet A4
     ├── TicketThermalPdfGenerator.php    # Billet 80mm
     ├── SessionReportPdfGenerator.php
@@ -203,7 +220,7 @@ assets/
 
 ### Modèle de données
 
-7 entités principales :
+8 entités principales :
 
 ```
 User ─┐
@@ -221,6 +238,7 @@ User ─┐
 - **Seat** : siège physique de la salle (rangée + numéro, isActive)
 - **SeatAssignment** : placement d'un siège pour une réservation/représentation
 - **Payment** : paiement via HelloAsso (méthode, montant, type, transactionId)
+- **AuditLog** : journal d'audit (user, action, cible, résumé, IP, date)
 
 ### Suppressions en cascade
 
@@ -328,6 +346,9 @@ php bin/console doctrine:fixtures:load
 # Envoyer manuellement le rapport journalier
 php bin/console app:send-daily-report
 
+# Envoyer les rappels J-2
+php bin/console app:send-reminders
+
 # Anonymiser les anciennes réservations (RGPD)
 php bin/console app:anonymize-reservations
 
@@ -352,6 +373,9 @@ Voir le fichier [`note.txt`](./note.txt) pour les instructions complètes.
    ```cron
    # Rapport journalier à 8h
    0 8 * * * cd /path/to/project && php bin/console app:send-daily-report
+
+   # Rappels J-2 à 9h
+   0 9 * * * cd /path/to/project && php bin/console app:send-reminders
 
    # Anonymisation RGPD le 1er du mois à 3h
    0 3 1 * * cd /path/to/project && php bin/console app:anonymize-reservations

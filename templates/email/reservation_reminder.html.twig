@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; color: #1f2937; margin: 0; padding: 0; background: #f9fafb; }
+        .container { max-width: 600px; margin: 0 auto; padding: 32px 24px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 32px; }
+        .logo { text-align: center; margin-bottom: 24px; }
+        .logo img { height: 48px; }
+        h1 { font-size: 20px; margin: 0 0 8px; color: #111827; }
+        .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+        .section { margin-bottom: 20px; }
+        .section-title { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .section-value { font-size: 15px; color: #111827; font-weight: 500; }
+        .highlight { background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 24px; }
+        .highlight-date { font-size: 18px; font-weight: 700; color: #92400e; }
+        .highlight-label { font-size: 13px; color: #92400e; margin-top: 4px; }
+        .note { background: #f3f4f6; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #4b5563; margin-top: 20px; }
+        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <img src="https://www.les-mathuloire.com/wp-content/uploads/2015/09/matu-loire-logo-couleur-sans-fond2-11.png" alt="Les Mathu'Loire">
+            </div>
+
+            <h1>C'est bientôt le jour J !</h1>
+            <p class="subtitle">Rappel pour votre réservation n° {{ reservation.id }}</p>
+
+            <div class="highlight">
+                <div class="highlight-date">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+                <div class="highlight-label">dans 2 jours</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Spectacle</div>
+                <div class="section-value">{{ reservation.representation.show.title }}</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Lieu</div>
+                <div class="section-value">Salle des fêtes - Saint-Mathurin-sur-Loire</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Vos places</div>
+                <div class="section-value">
+                    {% set parts = [] %}
+                    {% if reservation.nbAdults > 0 %}
+                        {% set parts = parts|merge([reservation.nbAdults ~ ' adulte' ~ (reservation.nbAdults > 1 ? 's' : '')]) %}
+                    {% endif %}
+                    {% if reservation.nbChildren > 0 %}
+                        {% set parts = parts|merge([reservation.nbChildren ~ ' enfant' ~ (reservation.nbChildren > 1 ? 's' : '')]) %}
+                    {% endif %}
+                    {% if reservation.nbInvitations > 0 %}
+                        {% set parts = parts|merge([reservation.nbInvitations ~ ' invitation' ~ (reservation.nbInvitations > 1 ? 's' : '')]) %}
+                    {% endif %}
+                    {{ parts|join(', ') }}
+                </div>
+            </div>
+
+            <div class="note">
+                <strong>Pensez à :</strong>
+                <ul style="margin: 8px 0 0; padding-left: 20px;">
+                    <li>Présenter votre numéro de réservation <strong>n° {{ reservation.id }}</strong> au guichet</li>
+                    <li>Arriver 15 minutes avant le début du spectacle</li>
+                    <li>La billetterie ouvre 45 minutes avant la représentation</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="{{ url('app_reservation_tracking', { id: reservation.id, token: reservation.token }) }}" style="color: #8b4572; text-decoration: underline; font-size: 13px;">Consulter ma réservation en ligne</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Cie Les Mathu'Loire - 100 Levée du Roi René - 49250 Saint-Mathurin-sur-Loire</p>
+            <p>contact@les-mathuloire.com - www.les-mathuloire.com</p>
+        </div>
+    </div>
+</body>
+</html>

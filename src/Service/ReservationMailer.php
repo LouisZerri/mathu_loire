@@ -38,6 +38,21 @@ class ReservationMailer
         $this->mailer->send($email);
     }
 
+    public function sendReminder(Reservation $reservation): void
+    {
+        $html = $this->twig->render('email/reservation_reminder.html.twig', [
+            'reservation' => $reservation,
+        ]);
+
+        $email = (new Email())
+            ->from($this->mailerFrom)
+            ->to($reservation->getSpectatorEmail())
+            ->subject('Rappel : ' . $reservation->getRepresentation()->getShow()->getTitle() . ' dans 2 jours !')
+            ->html($html);
+
+        $this->mailer->send($email);
+    }
+
     public function sendCancellation(Reservation $reservation): void
     {
         $representation = $reservation->getRepresentation();
