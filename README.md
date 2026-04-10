@@ -390,6 +390,98 @@ npx eslint assets/
 
 Philosophie : chaque test protège contre un risque réel (perte d'argent, sur-réservation, faille de sécurité, incohérence de données). Pas de tests décoratifs.
 
+### Analyse statique et linting
+
+L'analyse statique et le linting garantissent la qualité du code **avant** l'exécution. Ils détectent les bugs, les erreurs de typage, les failles de sécurité et les mauvaises pratiques sans avoir à lancer l'application. C'est un filet de sécurité indispensable pour éviter les régressions et maintenir un code propre sur le long terme.
+
+| Outil | Commande | Rôle |
+|---|---|---|
+| PHPStan (level 7) | `vendor/bin/phpstan analyse` | Analyse statique PHP : détecte les erreurs de typage, les appels de méthodes sur null, les types de retour incorrects, les paramètres manquants. Level 7 = strict (sur 9). |
+| PHP-Parallel-Lint | `vendor/bin/parallel-lint src/` | Vérifie la syntaxe PHP de tous les fichiers. Détecte les erreurs de parsing (accolades manquantes, syntax errors) sans exécuter le code. |
+| ESLint | `npx eslint assets/` | Analyse statique JavaScript/JSX : détecte les variables non utilisées, les erreurs de logique, les imports manquants et les mauvaises pratiques React/Stimulus. |
+| QueryAuditor | `php tests/n1_check.php` | Outil custom de détection des requêtes N+1. Exécute toutes les requêtes du projet et compte les accès SQL. Alerte si une boucle génère trop de requêtes (signe d'un lazy-loading non optimisé). |
+
+**Pourquoi c'est important :**
+- **PHPStan** empêche les bugs en production liés aux types (ex: appeler une méthode sur un objet null → crash)
+- **PHP-Parallel-Lint** empêche de déployer un fichier avec une erreur de syntaxe (le site serait down)
+- **ESLint** empêche les bugs JavaScript silencieux (variable non définie, import oublié)
+- **QueryAuditor** empêche les problèmes de performance en base de données (une page qui met 10s à charger à cause de 500 requêtes au lieu de 2)
+
+Configuration :
+- PHPStan : `phpstan.neon` (level 7, extensions Symfony + Doctrine)
+- ESLint : `eslint.config.mjs` (ES2022, JSX, ignore vendor)
+- PHPUnit : `phpunit.xml`
+
+---
+
+## Conformité RGPD
+
+L'application traite des données personnelles de spectateurs (nom, prénom, email, téléphone, ville). Voici les mesures mises en place pour respecter le Règlement Général sur la Protection des Données :
+
+### Données collectées
+
+| Donnée | Finalité | Base légale |
+|---|---|---|
+| Nom, prénom | Identification au guichet | Exécution du contrat (réservation) |
+| Email | Envoi de la confirmation et du rappel J-2 | Exécution du contrat |
+| Téléphone | Contact en cas de changement de représentation | Intérêt légitime |
+| Ville | Statistiques de provenance (anonymisées) | Intérêt légitime |
+| Commentaire | Note libre du spectateur | Consentement |
+
+### Consentement
+
+- Le formulaire de réservation public inclut une **case à cocher obligatoire** renvoyant vers la politique de confidentialité (`/politique-de-confidentialite`)
+- Sans consentement, la réservation ne peut pas être soumise
+
+### Droit d'accès et de suivi
+
+- Chaque spectateur reçoit un **lien unique sécurisé** (token 64 caractères) dans son email de confirmation
+- Ce lien permet de consulter et d'annuler sa réservation sans créer de compte
+
+### Droit à l'oubli — Anonymisation automatique
+
+Les données personnelles des réservations de plus de **12 mois** sont automatiquement anonymisées :
+
+```
+Nom        → "Anonymisé"
+Prénom     → "Anonymisé"
+Ville      → "Anonymisé"
+Téléphone  → "Anonymisé"
+Email      → "anonymise@rgpd.local"
+Commentaire → supprimé
+```
+
+Commande : `php bin/console app:anonymize-reservations`
+Cron recommandé : le 1er de chaque mois à 3h (`0 3 1 * * ...`)
+
+La réservation reste en base (pour les statistiques de fréquentation) mais n'est plus rattachable à une personne physique.
+
+### Durée de conservation
+
+| Donnée | Durée | Justification |
+|---|---|---|
+| Données spectateur | 12 mois après la représentation | Période raisonnable pour la gestion post-spectacle |
+| Logs d'audit | 6 mois (purge manuelle via admin) | Traçabilité des actions admin |
+| Données de paiement | Conservées par HelloAsso (sous-traitant) | Obligations légales HelloAsso |
+
+### Sécurité des données
+
+- Mots de passe hashés avec l'algorithme par défaut de Symfony (bcrypt/argon2)
+- Tokens de réservation : 64 caractères hexadécimaux aléatoires (non prévisibles)
+- Tokens de reset password : expiration 1h, usage unique
+- CSRF protection sur tous les formulaires
+- Rate limiting sur la page de connexion (5 tentatives/minute)
+- Accès admin restreint par rôle (`ROLE_BILLETTISTE`, `ROLE_ADMIN`)
+- Journal d'audit des actions administratives (qui a fait quoi, quand, depuis quelle IP)
+- Webhook HelloAsso sécurisé par token secret + vérification API
+
+### Sous-traitants
+
+| Service | Rôle | Données transmises |
+|---|---|---|
+| HelloAsso | Paiement en ligne | Nom, prénom, email, montant |
+| OVH | Hébergement + emails | Toutes (hébergement serveur) |
+
 ---
 
 ## Déploiement en production
