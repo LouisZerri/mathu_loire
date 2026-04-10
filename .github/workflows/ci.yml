@@ -75,7 +75,7 @@ jobs:
           HELLOASSO_CLIENT_SECRET: "test"
           HELLOASSO_ORGANIZATION_SLUG: "test"
           HELLOASSO_IS_SANDBOX: "true"
-          HELLOASSO_WEBHOOK_SECRET: "test"
+          HELLOASSO_WEBHOOK_SECRET: "test_webhook_secret"
           APP_BASE_URL: "https://test.local"
           APP_SECRET: "test_secret"
           TRUSTED_PROXIES: ""
