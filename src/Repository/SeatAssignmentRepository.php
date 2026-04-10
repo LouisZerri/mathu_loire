@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Representation;
 use App\Entity\SeatAssignment;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -16,28 +17,19 @@ class SeatAssignmentRepository extends ServiceEntityRepository
         parent::__construct($registry, SeatAssignment::class);
     }
 
-    //    /**
-    //     * @return SeatAssignment[] Returns an array of SeatAssignment objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('s.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?SeatAssignment
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * @return SeatAssignment[]
+     */
+    public function findByRepresentationWithReservation(Representation $representation): array
+    {
+        return $this->createQueryBuilder('sa')
+            ->leftJoin('sa.reservation', 'r')
+            ->addSelect('r')
+            ->join('sa.seat', 's')
+            ->addSelect('s')
+            ->where('sa.representation = :rep')
+            ->setParameter('rep', $representation)
+            ->getQuery()
+            ->getResult();
+    }
 }

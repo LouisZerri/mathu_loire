@@ -134,6 +134,23 @@ class ReservationRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return \App\Entity\Reservation[]
+     */
+    public function findByRepresentationWithAssignments(Representation $representation): array
+    {
+        return $this->createQueryBuilder('r')
+            ->leftJoin('r.seatAssignments', 'sa')
+            ->addSelect('sa')
+            ->where('r.representation = :rep')
+            ->andWhere('r.status = :status')
+            ->setParameter('rep', $representation)
+            ->setParameter('status', 'validated')
+            ->orderBy('r.spectatorLastName', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findByFilters(?Representation $representation = null, ?string $status = null, int $page = 1, int $limit = 20, ?int $year = null, ?string $search = null): array
     {
         $qb = $this->createQueryBuilder('r')

@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\SeatAssignment;
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
+use App\Repository\SeatAssignmentRepository;
 use App\Repository\SeatRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -41,7 +42,7 @@ class SeatPlanController extends AbstractController
         int $representationId,
         SeatRepository $seatRepository,
         RepresentationRepository $representationRepository,
-        EntityManagerInterface $em,
+        SeatAssignmentRepository $seatAssignmentRepository,
     ): JsonResponse {
         $representation = $representationRepository->find($representationId);
         if (!$representation) {
@@ -49,17 +50,19 @@ class SeatPlanController extends AbstractController
         }
 
         $seats = $seatRepository->findAll();
-        $assignments = $em->getRepository(SeatAssignment::class)->findBy(['representation' => $representation]);
+        $assignments = $seatAssignmentRepository->findByRepresentationWithReservation($representation);
 
         $assignmentMap = [];
         foreach ($assignments as $assignment) {
-            $key = $assignment->getSeat()->getRow() . $assignment->getSeat()->getNumber();
+            $seat = $assignment->getSeat();
+            $resa = $assignment->getReservation();
+            $key = $seat->getRow() . $seat->getNumber();
             $assignmentMap[$key] = [
                 'id' => $assignment->getId(),
                 'status' => $assignment->getStatus(),
-                'reservationId' => $assignment->getReservation()?->getId(),
-                'spectatorName' => $assignment->getReservation()
-                    ? $assignment->getReservation()->getSpectatorLastName() . ' ' . $assignment->getReservation()->getSpectatorFirstName()
+                'reservationId' => $resa?->getId(),
+                'spectatorName' => $resa
+                    ? $resa->getSpectatorLastName() . ' ' . $resa->getSpectatorFirstName()
                     : null,
             ];
         }
@@ -104,10 +107,7 @@ class SeatPlanController extends AbstractController
             return $this->json(['error' => 'Représentation introuvable'], 404);
         }
 
-        $reservations = $reservationRepository->findBy([
-            'representation' => $representation,
-            'status' => 'validated',
-        ], ['spectatorLastName' => 'ASC']);
+        $reservations = $reservationRepository->findByRepresentationWithAssignments($representation);
 
         $data = [];
         foreach ($reservations as $res) {
