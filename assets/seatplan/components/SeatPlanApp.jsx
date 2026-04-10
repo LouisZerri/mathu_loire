@@ -49,15 +49,32 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
         };
     }, [loading]);
 
+    const api = useCallback(async (url, options = {}) => {
+        try {
+            const res = await fetch(url, options);
+            if (!res.ok) {
+                throw new Error(`Erreur serveur (${res.status})`);
+            }
+            return await res.json();
+        } catch (e) {
+            showMessage(e.message || 'Erreur réseau. Vérifiez votre connexion.', 'error');
+            return null;
+        }
+    }, []);
+
     const fetchData = useCallback(async () => {
         if (!representationId) return;
         setLoading(true);
-        const [seatsRes, resaRes] = await Promise.all([
-            fetch(`/admin/plan-de-salle/api/seats/${representationId}`),
-            fetch(`/admin/plan-de-salle/api/reservations/${representationId}`),
-        ]);
-        setSeats(await seatsRes.json());
-        setReservations(await resaRes.json());
+        try {
+            const [seatsData, resaData] = await Promise.all([
+                fetch(`/admin/plan-de-salle/api/seats/${representationId}`).then(r => r.json()),
+                fetch(`/admin/plan-de-salle/api/reservations/${representationId}`).then(r => r.json()),
+            ]);
+            setSeats(seatsData);
+            setReservations(resaData);
+        } catch {
+            showMessage('Erreur lors du chargement du plan de salle.', 'error');
+        }
         setLoading(false);
     }, [representationId]);
 
@@ -103,12 +120,12 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
             closeContextMenu();
             return;
         }
-        const res = await fetch('/admin/plan-de-salle/api/toggle-broken', {
+        const data = await api('/admin/plan-de-salle/api/toggle-broken', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ seatId: seat.id }),
         });
-        const data = await res.json();
+        if (!data) return;
         showMessage(data.isActive ? `Siège ${seat.row}${seat.number} réparé` : `Siège ${seat.row}${seat.number} marqué cassé`);
         closeContextMenu();
         fetchData();
@@ -125,7 +142,7 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
                 showMessage('Vous devez sélectionner un siège assigné à une autre personne.', 'error');
                 return;
             }
-            await fetch('/admin/plan-de-salle/api/swap', {
+            const swapResult = await api('/admin/plan-de-salle/api/swap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -134,6 +151,7 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
                     representationId,
                 }),
             });
+            if (!swapResult) return;
             showMessage(`Sièges ${swapSource.row}${swapSource.number} ↔ ${seat.row}${seat.number} échangés`);
             setSwapSource(null);
             fetchData();
@@ -144,7 +162,7 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
 
         if (seat.status === 'assigned' && !selectedReservation) {
             if (confirm(`Libérer le siège ${seat.row}${seat.number} (${seat.spectatorName}) ?`)) {
-                await fetch('/admin/plan-de-salle/api/unassign', {
+                await api('/admin/plan-de-salle/api/unassign', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ seatId: seat.id, representationId }),
@@ -196,7 +214,7 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
                 previousReservationId = seat.reservationId;
             }
 
-            await fetch('/admin/plan-de-salle/api/assign', {
+            const assignResult = await api('/admin/plan-de-salle/api/assign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -205,13 +223,14 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
                     representationId,
                 }),
             });
+            if (!assignResult) return;
             showMessage(`Siège ${seat.row}${seat.number} → ${selectedReservation.spectatorName}`);
 
             // Si on a déplacé le siège d'une autre réservation, basculer sur elle pour la replacer
             if (previousReservationId) {
                 await fetchData();
-                const updated = await fetch(`/admin/plan-de-salle/api/reservations/${representationId}`);
-                const updatedReservations = await updated.json();
+                const updatedReservations = await api(`/admin/plan-de-salle/api/reservations/${representationId}`);
+                if (!updatedReservations) return;
                 const previous = updatedReservations.find(r => r.id === previousReservationId);
                 if (previous && confirm(`Le déplacement est effectué. Replacer maintenant ${previous.spectatorName} (${previous.assignedCount}/${previous.totalPlaces} placé) ?`)) {
                     setSelectedReservation(previous);
@@ -225,7 +244,7 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
         }
 
         if (seat.status === 'available' && !selectedReservation) {
-            await fetch('/admin/plan-de-salle/api/block', {
+            await api('/admin/plan-de-salle/api/block', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ seatId: seat.id, representationId }),

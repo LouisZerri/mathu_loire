@@ -10,6 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ReservationRepository::class)]
+#[ORM\Index(name: 'idx_reservation_last_name', columns: ['spectator_last_name'])]
+#[ORM\Index(name: 'idx_reservation_email', columns: ['spectator_email'])]
+#[ORM\Index(name: 'idx_reservation_status', columns: ['status'])]
 class Reservation
 {
     #[ORM\Id]

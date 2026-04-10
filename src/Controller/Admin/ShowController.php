@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
@@ -97,10 +98,9 @@ class ShowController extends AbstractController
             $title = $show->getTitle();
             $showId = $show->getId();
             if ($show->getImageName()) {
+                $fs = new Filesystem();
                 $imagePath = $this->getParameter('kernel.project_dir') . '/public/uploads/shows/' . $show->getImageName();
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
+                $fs->remove($imagePath);
             }
             $em->remove($show);
             $em->flush();
@@ -127,10 +127,9 @@ class ShowController extends AbstractController
 
         // Supprimer l'ancienne image
         if ($show->getImageName()) {
+            $fs = new Filesystem();
             $oldPath = $this->getParameter('kernel.project_dir') . '/public/uploads/shows/' . $show->getImageName();
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
-            }
+            $fs->remove($oldPath);
         }
 
         $filename = $slugger->slug($show->getTitle()) . '-' . uniqid() . '.' . $imageFile->guessExtension();
