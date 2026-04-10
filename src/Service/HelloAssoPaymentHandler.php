@@ -230,6 +230,7 @@ class HelloAssoPaymentHandler
         $payment->setCreatedAt(new \DateTimeImmutable());
 
         $this->em->persist($payment);
+        $this->em->flush();
 
         return true;
     }

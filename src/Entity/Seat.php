@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SeatRepository::class)]
+#[ORM\UniqueConstraint(name: 'unique_seat_row_number', columns: ['`row`', 'number'])]
 class Seat
 {
     #[ORM\Id]
