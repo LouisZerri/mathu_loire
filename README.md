@@ -399,13 +399,11 @@ L'analyse statique et le linting garantissent la qualité du code **avant** l'ex
 | PHPStan (level 7) | `vendor/bin/phpstan analyse` | Analyse statique PHP : détecte les erreurs de typage, les appels de méthodes sur null, les types de retour incorrects, les paramètres manquants. Level 7 = strict (sur 9). |
 | PHP-Parallel-Lint | `vendor/bin/parallel-lint src/` | Vérifie la syntaxe PHP de tous les fichiers. Détecte les erreurs de parsing (accolades manquantes, syntax errors) sans exécuter le code. |
 | ESLint | `npx eslint assets/` | Analyse statique JavaScript/JSX : détecte les variables non utilisées, les erreurs de logique, les imports manquants et les mauvaises pratiques React/Stimulus. |
-| QueryAuditor | `php tests/n1_check.php` | Outil custom de détection des requêtes N+1. Exécute toutes les requêtes du projet et compte les accès SQL. Alerte si une boucle génère trop de requêtes (signe d'un lazy-loading non optimisé). |
 
 **Pourquoi c'est important :**
 - **PHPStan** empêche les bugs en production liés aux types (ex: appeler une méthode sur un objet null → crash)
 - **PHP-Parallel-Lint** empêche de déployer un fichier avec une erreur de syntaxe (le site serait down)
 - **ESLint** empêche les bugs JavaScript silencieux (variable non définie, import oublié)
-- **QueryAuditor** empêche les problèmes de performance en base de données (une page qui met 10s à charger à cause de 500 requêtes au lieu de 2)
 
 Configuration :
 - PHPStan : `phpstan.neon` (level 7, extensions Symfony + Doctrine)
