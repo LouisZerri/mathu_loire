@@ -25,12 +25,13 @@ class PasswordResetController extends AbstractController
             $user = $email ? $userRepository->findOneBy(['email' => $email]) : null;
 
             if ($user) {
-                $user->setResetToken(bin2hex(random_bytes(32)));
+                $rawToken = bin2hex(random_bytes(32));
+                $user->setResetToken(hash('sha256', $rawToken));
                 $user->setResetTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
                 $em->flush();
 
                 try {
-                    $mailer->sendResetLink($user);
+                    $mailer->sendResetLink($user, $rawToken);
                 } catch (\Exception $e) {
                     // ne pas révéler l'erreur
                 }
@@ -53,7 +54,7 @@ class PasswordResetController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
     ): Response {
-        $user = $userRepository->findOneBy(['resetToken' => $token]);
+        $user = $userRepository->findOneBy(['resetToken' => hash('sha256', $token)]);
 
         if (!$user || $user->getResetTokenExpiresAt() < new \DateTimeImmutable()) {
             $this->addFlash('error', 'Ce lien est invalide ou a expiré.');

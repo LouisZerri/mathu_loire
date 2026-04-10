@@ -256,7 +256,7 @@ class HelloAssoPaymentHandler
                 $refundPayment = new Payment();
                 $refundPayment->setReservation($reservation);
                 $refundPayment->setMethod('helloasso');
-                $refundPayment->setAmount('-' . $payment->getAmount());
+                $refundPayment->setAmount((string) -abs((float) $payment->getAmount()));
                 $refundPayment->setType('refund');
                 $refundPayment->setTransactionId($payment->getTransactionId() . '_refund');
                 $refundPayment->setCreatedAt(new \DateTimeImmutable());

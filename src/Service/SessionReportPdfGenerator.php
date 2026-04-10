@@ -17,6 +17,7 @@ class SessionReportPdfGenerator
         private ReservationRepository $reservationRepository,
         private SeatRepository $seatRepository,
         private SeatAssignmentRepository $seatAssignmentRepository,
+        private ReservationService $reservationService,
     ) {
     }
 
@@ -45,8 +46,7 @@ class SessionReportPdfGenerator
             $totalAdults += $res->getNbAdults();
             $totalChildren += $res->getNbChildren();
             $totalInvitations += $res->getNbInvitations();
-            $totalRevenue += ($res->getNbAdults() * (float) $representation->getAdultPrice())
-                           + ($res->getNbChildren() * (float) $representation->getChildPrice());
+            $totalRevenue += $this->reservationService->computeTotal($res);
         }
 
         $totalSpectators = $totalAdults + $totalChildren + $totalInvitations;

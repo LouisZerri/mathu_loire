@@ -174,11 +174,12 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
         }
 
         if (seat.status === 'blocked') {
-            await fetch('/admin/plan-de-salle/api/unassign', {
+            const unblockResult = await api('/admin/plan-de-salle/api/unassign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ seatId: seat.id, representationId }),
             });
+            if (!unblockResult) return;
             showMessage(`Siège ${seat.row}${seat.number} débloqué`);
             fetchData();
             return;
@@ -188,11 +189,12 @@ export default function SeatPlanApp({ representationId, preselectedReservationId
             // Si le siège est déjà assigné à la réservation sélectionnée, le libérer
             if (seat.status === 'assigned' && seat.reservationId === selectedReservation.id) {
                 if (confirm(`Libérer le siège ${seat.row}${seat.number} ?`)) {
-                    await fetch('/admin/plan-de-salle/api/unassign', {
+                    const freeResult = await api('/admin/plan-de-salle/api/unassign', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ seatId: seat.id, representationId }),
                     });
+                    if (!freeResult) return;
                     showMessage(`Siège ${seat.row}${seat.number} libéré`);
                     fetchData();
                 }

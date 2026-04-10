@@ -20,11 +20,11 @@ class PasswordResetMailer
     ) {
     }
 
-    public function sendResetLink(User $user): void
+    public function sendResetLink(User $user, string $rawToken): void
     {
         $resetUrl = $this->urlGenerator->generate(
             'app_reset_password',
-            ['token' => $user->getResetToken()],
+            ['token' => $rawToken],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
