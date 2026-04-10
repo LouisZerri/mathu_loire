@@ -3,9 +3,8 @@
 namespace App\Service;
 
 use App\Entity\Representation;
-use App\Entity\SeatAssignment;
+use App\Repository\SeatAssignmentRepository;
 use App\Repository\SeatRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Twig\Environment;
@@ -15,15 +14,14 @@ class SeatPlanPdfGenerator
     public function __construct(
         private Environment $twig,
         private SeatRepository $seatRepository,
-        private EntityManagerInterface $em,
+        private SeatAssignmentRepository $seatAssignmentRepository,
     ) {
     }
 
     public function generate(Representation $representation): string
     {
         $seats = $this->seatRepository->findAll();
-        $assignments = $this->em->getRepository(SeatAssignment::class)
-            ->findBy(['representation' => $representation]);
+        $assignments = $this->seatAssignmentRepository->findByRepresentationWithReservation($representation);
 
         $assignmentMap = [];
         foreach ($assignments as $a) {

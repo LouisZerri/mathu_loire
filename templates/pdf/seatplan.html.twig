@@ -114,8 +114,6 @@
         <div class="date">{{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
     </div>
 
-    <div class="scene">SCÈNE</div>
-
     {% set seatMap = {
         A: [7, 8, 9, 10],
         B: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
@@ -136,7 +134,7 @@
         R: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     } %}
 
-    {% set rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R'] %}
+    {% set rows = ['R', 'P', 'O', 'N', 'M', 'L', 'K', 'J', 'I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'] %}
 
     <div class="plan">
         {% for row in rows %}
@@ -178,6 +176,8 @@
             </div>
         {% endfor %}
     </div>
+
+    <div class="scene">SCÈNE</div>
 
     <div class="legend">
         <span class="legend-item"><span class="legend-box seat-available"></span> Libre</span>

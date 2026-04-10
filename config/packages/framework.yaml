@@ -5,6 +5,12 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    # Trusted proxies pour que getClientIp() retourne la vraie IP
+    # En prod derrière un reverse proxy (ngrok, OVH, Cloudflare), configurer les IPs du proxy
+    # REMOTE_ADDR = fait confiance au proxy immédiat (suffisant pour OVH mutualisé)
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto']
+
     #esi: true
     #fragments: true
 

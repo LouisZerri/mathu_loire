@@ -13,6 +13,7 @@ class ReservationMailer
     public function __construct(
         private MailerInterface $mailer,
         private Environment $twig,
+        private ReservationService $reservationService,
         #[Autowire('%env(MAILER_FROM)%')]
         private string $mailerFrom,
     ) {
@@ -21,8 +22,7 @@ class ReservationMailer
     public function sendConfirmation(Reservation $reservation): void
     {
         $representation = $reservation->getRepresentation();
-        $total = ($reservation->getNbAdults() * (float) $representation->getAdultPrice())
-               + ($reservation->getNbChildren() * (float) $representation->getChildPrice());
+        $total = $this->reservationService->computeTotal($reservation);
 
         $html = $this->twig->render('email/reservation_confirmation.html.twig', [
             'reservation' => $reservation,
@@ -56,8 +56,7 @@ class ReservationMailer
     public function sendCancellation(Reservation $reservation): void
     {
         $representation = $reservation->getRepresentation();
-        $total = ($reservation->getNbAdults() * (float) $representation->getAdultPrice())
-               + ($reservation->getNbChildren() * (float) $representation->getChildPrice());
+        $total = $this->reservationService->computeTotal($reservation);
 
         $html = $this->twig->render('email/reservation_cancellation.html.twig', [
             'reservation' => $reservation,

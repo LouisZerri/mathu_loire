@@ -3,10 +3,9 @@
 namespace App\Service;
 
 use App\Entity\Representation;
-use App\Entity\SeatAssignment;
 use App\Repository\ReservationRepository;
+use App\Repository\SeatAssignmentRepository;
 use App\Repository\SeatRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Twig\Environment;
@@ -17,7 +16,7 @@ class SessionReportPdfGenerator
         private Environment $twig,
         private ReservationRepository $reservationRepository,
         private SeatRepository $seatRepository,
-        private EntityManagerInterface $em,
+        private SeatAssignmentRepository $seatAssignmentRepository,
     ) {
     }
 
@@ -29,8 +28,7 @@ class SessionReportPdfGenerator
         );
 
         $seats = $this->seatRepository->findAll();
-        $assignments = $this->em->getRepository(SeatAssignment::class)
-            ->findBy(['representation' => $representation]);
+        $assignments = $this->seatAssignmentRepository->findByRepresentationWithReservation($representation);
 
         $assignmentMap = [];
         foreach ($assignments as $a) {

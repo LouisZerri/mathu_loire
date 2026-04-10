@@ -297,17 +297,6 @@ class ReservationController extends AbstractController
     }
 
     #[Route('/{id}/print', name: 'app_admin_reservation_print', requirements: ['id' => '\d+'])]
-    private function csvSafe(string $value): string
-    {
-        $value = str_replace(';', ',', $value);
-
-        if (isset($value[0]) && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
-            $value = "'" . $value;
-        }
-
-        return $value;
-    }
-
     public function print(
         Reservation $reservation,
         TicketThermalPdfGenerator $pdfGenerator,
@@ -318,5 +307,16 @@ class ReservationController extends AbstractController
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => sprintf('inline; filename="billets-thermal-%d.pdf"', $reservation->getId()),
         ]);
+    }
+
+    private function csvSafe(string $value): string
+    {
+        $value = str_replace(';', ',', $value);
+
+        if (isset($value[0]) && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            $value = "'" . $value;
+        }
+
+        return $value;
     }
 }

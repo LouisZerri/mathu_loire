@@ -128,6 +128,24 @@ class SeatPlanController extends AbstractController
         return $this->json($data);
     }
 
+    private function parseJson(Request $request, array $requiredFields): ?array
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (!is_array($data)) {
+            return null;
+        }
+
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || !is_numeric($data[$field])) {
+                return null;
+            }
+            $data[$field] = (int) $data[$field];
+        }
+
+        return $data;
+    }
+
     #[Route('/api/assign', name: 'app_admin_seatplan_api_assign', methods: ['POST'])]
     public function assignSeat(
         Request $request,
@@ -136,11 +154,14 @@ class SeatPlanController extends AbstractController
         RepresentationRepository $representationRepository,
         EntityManagerInterface $em,
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->parseJson($request, ['seatId', 'reservationId', 'representationId']);
+        if (!$data) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
 
-        $seat = $seatRepository->find($data['seatId'] ?? 0);
-        $reservation = $reservationRepository->find($data['reservationId'] ?? 0);
-        $representation = $representationRepository->find($data['representationId'] ?? 0);
+        $seat = $seatRepository->find($data['seatId']);
+        $reservation = $reservationRepository->find($data['reservationId']);
+        $representation = $representationRepository->find($data['representationId']);
 
         if (!$seat || !$reservation || !$representation) {
             return $this->json(['error' => 'Données invalides'], 400);
@@ -175,11 +196,14 @@ class SeatPlanController extends AbstractController
         RepresentationRepository $representationRepository,
         EntityManagerInterface $em,
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->parseJson($request, ['seatAId', 'seatBId', 'representationId']);
+        if (!$data) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
 
-        $seatA = $seatRepository->find($data['seatAId'] ?? 0);
-        $seatB = $seatRepository->find($data['seatBId'] ?? 0);
-        $representation = $representationRepository->find($data['representationId'] ?? 0);
+        $seatA = $seatRepository->find($data['seatAId']);
+        $seatB = $seatRepository->find($data['seatBId']);
+        $representation = $representationRepository->find($data['representationId']);
 
         if (!$seatA || !$seatB || !$representation) {
             return $this->json(['error' => 'Données invalides'], 400);
@@ -216,10 +240,13 @@ class SeatPlanController extends AbstractController
         RepresentationRepository $representationRepository,
         EntityManagerInterface $em,
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->parseJson($request, ['seatId', 'representationId']);
+        if (!$data) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
 
-        $seat = $seatRepository->find($data['seatId'] ?? 0);
-        $representation = $representationRepository->find($data['representationId'] ?? 0);
+        $seat = $seatRepository->find($data['seatId']);
+        $representation = $representationRepository->find($data['representationId']);
 
         if (!$seat || !$representation) {
             return $this->json(['error' => 'Données invalides'], 400);
@@ -245,10 +272,13 @@ class SeatPlanController extends AbstractController
         RepresentationRepository $representationRepository,
         EntityManagerInterface $em,
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->parseJson($request, ['seatId', 'representationId']);
+        if (!$data) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
 
-        $seat = $seatRepository->find($data['seatId'] ?? 0);
-        $representation = $representationRepository->find($data['representationId'] ?? 0);
+        $seat = $seatRepository->find($data['seatId']);
+        $representation = $representationRepository->find($data['representationId']);
 
         if (!$seat || !$representation) {
             return $this->json(['error' => 'Données invalides'], 400);
@@ -282,9 +312,12 @@ class SeatPlanController extends AbstractController
         SeatRepository $seatRepository,
         EntityManagerInterface $em,
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->parseJson($request, ['seatId']);
+        if (!$data) {
+            return $this->json(['error' => 'Données invalides'], 400);
+        }
 
-        $seat = $seatRepository->find($data['seatId'] ?? 0);
+        $seat = $seatRepository->find($data['seatId']);
 
         if (!$seat) {
             return $this->json(['error' => 'Données invalides'], 400);
