@@ -8,8 +8,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Affiche le détail d'un spectacle côté public avec ses représentations à venir.
+ */
 class ShowController extends AbstractController
 {
+    /**
+     * Affiche la fiche détaillée d'un spectacle avec la jauge de chaque représentation future.
+     *
+     * @return Response
+     */
     #[Route('/spectacle/{id}', name: 'app_show_detail', requirements: ['id' => '\d+'])]
     public function detail(Show $show, RepresentationRepository $representationRepository): Response
     {

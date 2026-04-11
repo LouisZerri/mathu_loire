@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Pdf;
 
 use App\Entity\Reservation;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Twig\Environment;
 
+/**
+ * Génère le PDF des billets au format thermique (80mm de large) pour impression sur imprimante ticket.
+ */
 class TicketThermalPdfGenerator
 {
     public function __construct(
@@ -14,6 +17,12 @@ class TicketThermalPdfGenerator
     ) {
     }
 
+    /**
+     * Génère le PDF thermique avec une hauteur dynamique selon le nombre de billets.
+     *
+     * @param Reservation $reservation Réservation pour laquelle générer les billets thermiques
+     * @return string Contenu binaire du PDF généré
+     */
     public function generate(Reservation $reservation): string
     {
         $html = $this->twig->render('pdf/ticket_thermal.html.twig', [

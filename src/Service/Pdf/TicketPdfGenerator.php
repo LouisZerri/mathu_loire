@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Pdf;
 
 use App\Entity\Reservation;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Twig\Environment;
 
+/**
+ * Génère le PDF du billet de réservation au format A4 paysage.
+ */
 class TicketPdfGenerator
 {
     public function __construct(
@@ -14,6 +17,12 @@ class TicketPdfGenerator
     ) {
     }
 
+    /**
+     * Génère le PDF du billet pour une réservation donnée.
+     *
+     * @param Reservation $reservation Réservation pour laquelle générer le billet
+     * @return string Contenu binaire du PDF généré
+     */
     public function generate(Reservation $reservation): string
     {
         $html = $this->twig->render('pdf/ticket.html.twig', [

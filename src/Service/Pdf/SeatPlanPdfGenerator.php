@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Pdf;
 
 use App\Entity\Representation;
 use App\Repository\SeatAssignmentRepository;
@@ -9,6 +9,9 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use Twig\Environment;
 
+/**
+ * Génère le PDF du plan de salle pour une représentation avec l'état de chaque siège.
+ */
 class SeatPlanPdfGenerator
 {
     public function __construct(
@@ -18,6 +21,12 @@ class SeatPlanPdfGenerator
     ) {
     }
 
+    /**
+     * Génère le PDF du plan de salle en format paysage A4.
+     *
+     * @param Representation $representation Représentation pour laquelle générer le plan
+     * @return string Contenu binaire du PDF généré
+     */
     public function generate(Representation $representation): string
     {
         $seats = $this->seatRepository->findAll();

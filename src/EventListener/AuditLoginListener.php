@@ -2,7 +2,7 @@
 
 namespace App\EventListener;
 
-use App\Service\AuditLogger;
+use App\Service\Security\AuditLogger;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Security\Http\Event\LoginFailureEvent;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;

@@ -4,11 +4,16 @@ namespace App\Service;
 
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
+use App\Service\Admin\DashboardService;
+use App\Service\Pdf\SeatPlanPdfGenerator;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
 
+/**
+ * Génère et envoie le rapport journalier par email avec les plans de salle en PJ.
+ */
 class ReportService
 {
     public function __construct(
@@ -23,6 +28,12 @@ class ReportService
     ) {
     }
 
+    /**
+     * Compile les stats et envoie le rapport quotidien aux destinataires.
+     *
+     * @param string[] $recipientEmails Adresses email des destinataires
+     * @return int Nombre d'emails envoyés
+     */
     public function sendDailyReport(array $recipientEmails): int
     {
         $seasonStats = $this->dashboardService->getSeasonStats();

@@ -10,10 +10,18 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+/**
+ * Gère la consultation et la purge des journaux d'audit de l'application.
+ */
 #[Route('/admin/audit')]
 #[IsGranted('ROLE_ADMIN')]
 class AuditController extends AbstractController
 {
+    /**
+     * Affiche la liste paginée des entrées d'audit avec filtres par utilisateur, action et période.
+     *
+     * @return Response
+     */
     #[Route('/', name: 'app_admin_audit_index')]
     public function index(
         Request $request,
@@ -50,6 +58,11 @@ class AuditController extends AbstractController
         ]);
     }
 
+    /**
+     * Supprime les entrées d'audit antérieures au nombre de mois spécifié.
+     *
+     * @return Response
+     */
     #[Route('/purge', name: 'app_admin_audit_purge', methods: ['POST'])]
     public function purge(
         Request $request,

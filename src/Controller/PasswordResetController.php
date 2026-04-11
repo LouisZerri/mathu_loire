@@ -3,35 +3,37 @@
 namespace App\Controller;
 
 use App\Repository\UserRepository;
-use App\Service\PasswordResetMailer;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Security\PasswordResetMailer;
+use App\Service\Security\PasswordResetService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Gère le processus de réinitialisation du mot de passe (demande et validation).
+ */
 class PasswordResetController extends AbstractController
 {
+    /**
+     * Traite la demande de réinitialisation de mot de passe et envoie le lien par email.
+     *
+     * @return Response
+     */
     #[Route('/mot-de-passe-oublie', name: 'app_forgot_password')]
     public function forgot(
         Request $request,
         UserRepository $userRepository,
-        EntityManagerInterface $em,
+        PasswordResetService $resetService,
         PasswordResetMailer $mailer,
     ): Response {
         if ($request->isMethod('POST')) {
             $email = trim((string) $request->request->get('email', ''));
-            $user = $email ? $userRepository->findOneBy(['email' => $email]) : null;
+            $result = $resetService->requestReset($email, $userRepository);
 
-            if ($user) {
-                $rawToken = bin2hex(random_bytes(32));
-                $user->setResetToken(hash('sha256', $rawToken));
-                $user->setResetTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
-                $em->flush();
-
+            if ($result) {
                 try {
-                    $mailer->sendResetLink($user, $rawToken);
+                    $mailer->sendResetLink($result['user'], $result['rawToken']);
                 } catch (\Exception $e) {
                     // ne pas révéler l'erreur
                 }
@@ -46,17 +48,23 @@ class PasswordResetController extends AbstractController
         return $this->render('security/forgot_password.html.twig');
     }
 
+    /**
+     * Valide le jeton de réinitialisation et permet la saisie du nouveau mot de passe.
+     *
+     * @param string $token Le jeton de réinitialisation reçu par email
+     *
+     * @return Response
+     */
     #[Route('/reinitialiser-mot-de-passe/{token}', name: 'app_reset_password')]
     public function reset(
         string $token,
         Request $request,
         UserRepository $userRepository,
-        EntityManagerInterface $em,
-        UserPasswordHasherInterface $passwordHasher,
+        PasswordResetService $resetService,
     ): Response {
-        $user = $userRepository->findOneBy(['resetToken' => hash('sha256', $token)]);
+        $user = $resetService->validateToken($token, $userRepository);
 
-        if (!$user || $user->getResetTokenExpiresAt() < new \DateTimeImmutable()) {
+        if (!$user) {
             $this->addFlash('error', 'Ce lien est invalide ou a expiré.');
 
             return $this->redirectToRoute('app_forgot_password');
@@ -71,10 +79,7 @@ class PasswordResetController extends AbstractController
             } elseif ($password !== $passwordConfirm) {
                 $this->addFlash('error', 'Les mots de passe ne correspondent pas.');
             } else {
-                $user->setPassword($passwordHasher->hashPassword($user, $password));
-                $user->setResetToken(null);
-                $user->setResetTokenExpiresAt(null);
-                $em->flush();
+                $resetService->resetPassword($user, $password);
 
                 $this->addFlash('success', 'Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.');
 

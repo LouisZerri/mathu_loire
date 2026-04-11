@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Security;
 
 use App\Entity\AuditLog;
 use App\Entity\User;
@@ -8,6 +8,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 
+/**
+ * Enregistre les actions utilisateur dans un journal d'audit pour traçabilité.
+ */
 class AuditLogger
 {
     public const LOGIN_SUCCESS = 'login.success';
@@ -39,6 +42,17 @@ class AuditLogger
     ) {
     }
 
+    /**
+     * Persiste une entrée d'audit avec l'utilisateur courant et l'IP de la requête.
+     *
+     * @param string $action Type d'action (utiliser les constantes de classe)
+     * @param string|null $summary Résumé lisible de l'action
+     * @param string|null $targetType Type de l'entité cible (ex : 'reservation', 'show')
+     * @param int|null $targetId Identifiant de l'entité cible
+     * @param array|null $details Données supplémentaires à stocker en JSON
+     * @param string|null $forcedEmail Email à utiliser si aucun utilisateur n'est connecté
+     * @return void
+     */
     public function log(
         string $action,
         ?string $summary = null,

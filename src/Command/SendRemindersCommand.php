@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Repository\ReservationRepository;
-use App\Service\ReservationMailer;
+use App\Service\Reservation\ReservationMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

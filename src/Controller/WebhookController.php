@@ -4,9 +4,9 @@ namespace App\Controller;
 
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
-use App\Service\HelloAssoPaymentHandler;
-use App\Service\ReservationMailer;
-use App\Service\ReservationService;
+use App\Service\HelloAsso\HelloAssoPaymentHandler;
+use App\Service\Reservation\ReservationMailer;
+use App\Service\Reservation\ReservationService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -14,8 +14,18 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Reçoit et traite les notifications webhook envoyées par HelloAsso après un paiement.
+ */
 class WebhookController extends AbstractController
 {
+    /**
+     * Traite la notification HelloAsso, vérifie le paiement et crée la réservation si nécessaire.
+     *
+     * @param string $secret Le secret de vérification transmis dans l'URL du webhook
+     *
+     * @return Response
+     */
     #[Route('/webhook/helloasso/{secret}', name: 'app_webhook_helloasso', methods: ['POST'])]
     public function helloasso(
         string $secret,
@@ -49,6 +59,7 @@ class WebhookController extends AbstractController
             }
 
             // Vérifier si une résa existe déjà pour ce checkout (créée par le return)
+            // Fallback : HelloAsso peut envoyer le checkoutIntentId dans meta ou dans les données de paiement
             $checkoutIntentId = $data['data']['meta']['checkoutIntentId'] ?? $paymentInfo['transaction_id'];
             $existing = $reservationRepository->findOneBy(['checkoutIntentId' => $checkoutIntentId]);
             if ($existing) {
@@ -73,6 +84,8 @@ class WebhookController extends AbstractController
                 return new Response('OK', Response::HTTP_OK);
             }
 
+            // Données minimales : le webhook ne contient pas le détail de la résa (nb places, ville, etc.)
+            // C'est un filet de sécurité si le retour navigateur a raté — la billettiste corrigera les détails
             $payer = $paymentInfo['payer'] ?? [];
             $draft = [
                 'nbAdults' => 1,

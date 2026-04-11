@@ -4,13 +4,13 @@ namespace App\Tests\Unit\Service;
 
 use App\Entity\Payment;
 use App\Entity\Reservation;
-use App\Service\HelloAssoPaymentHandler;
+use App\Service\HelloAsso\HelloAssoClient;
+use App\Service\HelloAsso\HelloAssoPaymentHandler;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class HelloAssoPaymentHandlerTest extends TestCase
 {
@@ -22,24 +22,16 @@ class HelloAssoPaymentHandlerTest extends TestCase
         $this->em = $this->createMock(EntityManagerInterface::class);
 
         $this->handler = new HelloAssoPaymentHandler(
-            clientId: 'test',
-            clientSecret: 'test',
-            organizationSlug: 'test',
-            isSandbox: true,
             baseUrl: 'https://test.local',
-            httpClient: $this->createMock(HttpClientInterface::class),
+            client: $this->createMock(HelloAssoClient::class),
             urlGenerator: $this->createMock(UrlGeneratorInterface::class),
             em: $this->em,
             logger: new NullLogger(),
         );
     }
 
-    // --- Vérification checkout ---
-
-    public function testVerifyCheckoutReturnsNullWhenNoPayment(): void
+    public function testHandleNotificationParsesPaymentCorrectly(): void
     {
-        // Simulating via handleNotification since verifyCheckout needs HTTP
-        // We test the webhook parsing logic instead
         $result = $this->handler->handleNotification([
             'eventType' => 'Payment',
             'data' => ['amount' => 900, 'id' => '12345'],
@@ -54,31 +46,25 @@ class HelloAssoPaymentHandlerTest extends TestCase
 
     public function testHandleNotificationIgnoresNonPaymentEvents(): void
     {
-        $result = $this->handler->handleNotification([
+        $this->assertNull($this->handler->handleNotification([
             'eventType' => 'Order',
             'data' => [],
-        ]);
-
-        $this->assertNull($result);
+        ]));
     }
 
     public function testHandleNotificationIgnoresMissingRepresentationId(): void
     {
-        $result = $this->handler->handleNotification([
+        $this->assertNull($this->handler->handleNotification([
             'eventType' => 'Payment',
             'data' => ['amount' => 900, 'id' => '123'],
             'metadata' => [],
-        ]);
-
-        $this->assertNull($result);
+        ]));
     }
 
     public function testHandleNotificationIgnoresEmptyPayload(): void
     {
         $this->assertNull($this->handler->handleNotification([]));
     }
-
-    // --- Enregistrement paiement ---
 
     public function testRecordPaymentPersistsCorrectData(): void
     {
@@ -95,10 +81,7 @@ class HelloAssoPaymentHandlerTest extends TestCase
 
         $this->em->expects($this->once())->method('flush');
 
-        $this->handler->recordPayment($reservation, [
-            'amount' => 900,
-            'id' => 12345,
-        ]);
+        $this->handler->recordPayment($reservation, ['amount' => 900, 'id' => 12345]);
     }
 
     public function testRecordPaymentWithDecimalAmount(): void
@@ -111,15 +94,10 @@ class HelloAssoPaymentHandlerTest extends TestCase
                 return $payment->getAmount() === '15.5';
             }));
 
-        $this->handler->recordPayment($reservation, [
-            'amount' => 1550,
-            'id' => 999,
-        ]);
+        $this->handler->recordPayment($reservation, ['amount' => 1550, 'id' => 999]);
     }
 
-    // --- Double traitement webhook (idempotence) ---
-
-    public function testHandleNotificationReturnsSameDataOnDuplicateCall(): void
+    public function testHandleNotificationIdempotent(): void
     {
         $payload = [
             'eventType' => 'Payment',
@@ -127,11 +105,9 @@ class HelloAssoPaymentHandlerTest extends TestCase
             'metadata' => ['representation_id' => '42', 'draft_token' => 'abc'],
         ];
 
-        $result1 = $this->handler->handleNotification($payload);
-        $result2 = $this->handler->handleNotification($payload);
-
-        // Les deux appels retournent les mêmes données
-        // L'idempotence réelle est gérée par le WebhookController (findOneBy checkoutIntentId)
-        $this->assertEquals($result1, $result2);
+        $this->assertEquals(
+            $this->handler->handleNotification($payload),
+            $this->handler->handleNotification($payload),
+        );
     }
 }

@@ -1,15 +1,19 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Pdf;
 
 use App\Entity\Representation;
 use App\Repository\ReservationRepository;
 use App\Repository\SeatAssignmentRepository;
 use App\Repository\SeatRepository;
+use App\Service\Reservation\ReservationService;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Twig\Environment;
 
+/**
+ * Génère le PDF du rapport de séance avec la liste des réservations et les statistiques.
+ */
 class SessionReportPdfGenerator
 {
     public function __construct(
@@ -21,6 +25,12 @@ class SessionReportPdfGenerator
     ) {
     }
 
+    /**
+     * Génère le PDF du rapport complet d'une séance (réservations, plan de salle, totaux).
+     *
+     * @param Representation $representation Représentation pour laquelle générer le rapport
+     * @return string Contenu binaire du PDF généré
+     */
     public function generate(Representation $representation): string
     {
         $reservations = $this->reservationRepository->findBy(

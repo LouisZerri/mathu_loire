@@ -4,7 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\AuditLog;
 use App\Entity\User;
-use App\Service\AuditLogger;
+use App\Service\Security\AuditLogger;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;

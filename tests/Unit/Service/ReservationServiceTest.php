@@ -6,7 +6,7 @@ use App\Entity\Representation;
 use App\Entity\Reservation;
 use App\Entity\SeatAssignment;
 use App\Entity\Show;
-use App\Service\ReservationService;
+use App\Service\Reservation\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

@@ -1,9 +1,12 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Admin;
 
 use App\Repository\ReservationRepository;
 
+/**
+ * Agrège les statistiques de réservation pour le tableau de bord admin.
+ */
 class DashboardService
 {
     public function __construct(
@@ -11,6 +14,12 @@ class DashboardService
     ) {
     }
 
+    /**
+     * Retourne les totaux globaux (spectateurs, recettes) pour une saison.
+     *
+     * @param int|null $year Année de la saison (null = saison courante)
+     * @return array Statistiques agrégées (totalReservations, totalSpectators, totalRevenue, etc.)
+     */
     public function getSeasonStats(?int $year = null): array
     {
         $stats = $this->reservationRepository->findSeasonStats($year);
@@ -30,6 +39,12 @@ class DashboardService
         ];
     }
 
+    /**
+     * Retourne les statistiques détaillées par représentation (remplissage, recettes).
+     *
+     * @param int|null $year Année de la saison (null = saison courante)
+     * @return array Liste des statistiques par représentation
+     */
     public function getRepresentationStats(?int $year = null): array
     {
         $raw = $this->reservationRepository->findRepresentationStats($year);

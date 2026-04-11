@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace App\Service\Security;
 
 use App\Entity\User;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -9,6 +9,9 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Environment;
 
+/**
+ * Envoie l'email de réinitialisation de mot de passe avec un lien sécurisé.
+ */
 class PasswordResetMailer
 {
     public function __construct(
@@ -20,6 +23,13 @@ class PasswordResetMailer
     ) {
     }
 
+    /**
+     * Envoie l'email contenant le lien de réinitialisation au membre.
+     *
+     * @param User $user Utilisateur demandant la réinitialisation
+     * @param string $rawToken Jeton brut (non hashé) à inclure dans le lien
+     * @return void
+     */
     public function sendResetLink(User $user, string $rawToken): void
     {
         $resetUrl = $this->urlGenerator->generate(
