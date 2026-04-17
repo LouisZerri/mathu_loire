@@ -39,6 +39,10 @@ class Reservation
     private ?int $nbInvitations = null;
 
     #[ORM\Column]
+    #[Assert\Range(min: 0, max: 50, notInRangeMessage: 'Doit être entre {{ min }} et {{ max }}.')]
+    private int $nbGroups = 0;
+
+    #[ORM\Column]
     private ?bool $isPMR = null;
 
     #[ORM\Column(length: 100)]
@@ -160,6 +164,18 @@ class Reservation
     public function setNbInvitations(int $nbInvitations): static
     {
         $this->nbInvitations = $nbInvitations;
+
+        return $this;
+    }
+
+    public function getNbGroups(): int
+    {
+        return $this->nbGroups;
+    }
+
+    public function setNbGroups(int $nbGroups): static
+    {
+        $this->nbGroups = $nbGroups;
 
         return $this;
     }

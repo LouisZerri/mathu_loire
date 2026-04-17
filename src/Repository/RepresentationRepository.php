@@ -104,7 +104,7 @@ class RepresentationRepository extends ServiceEntityRepository
     public function findBookedPlacesMap(): array
     {
         $results = $this->getEntityManager()->createQuery(
-            'SELECT rep.id, SUM(r.nbAdults + r.nbChildren + r.nbInvitations) as booked
+            'SELECT rep.id, SUM(r.nbAdults + r.nbChildren + r.nbInvitations + r.nbGroups) as booked
              FROM App\Entity\Reservation r
              JOIN r.representation rep
              WHERE r.status IN (:statuses)

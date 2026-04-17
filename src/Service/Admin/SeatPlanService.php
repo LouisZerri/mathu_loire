@@ -78,7 +78,7 @@ class SeatPlanService
         $reservations = $this->reservationRepository->findByRepresentationWithAssignments($representation);
         $data = [];
         foreach ($reservations as $res) {
-            $totalPlaces = $res->getNbAdults() + $res->getNbChildren() + $res->getNbInvitations();
+            $totalPlaces = $res->getNbAdults() + $res->getNbChildren() + $res->getNbInvitations() + $res->getNbGroups();
             $assignedCount = $res->getSeatAssignments()->filter(
                 fn(SeatAssignment $sa) => $sa->getStatus() === 'assigned'
             )->count();

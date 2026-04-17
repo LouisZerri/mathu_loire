@@ -121,7 +121,7 @@ class ReservationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $totalPlaces = $reservation->getNbAdults() + $reservation->getNbChildren() + $reservation->getNbInvitations();
+            $totalPlaces = $reservation->getNbAdults() + $reservation->getNbChildren() + $reservation->getNbInvitations() + $reservation->getNbGroups();
 
             if ($totalPlaces === 0) {
                 $this->addFlash('error', 'Veuillez saisir au moins une place.');

@@ -64,6 +64,12 @@ class AdminReservationType extends AbstractType
                 'empty_data' => '0',
                 'attr' => ['min' => 0],
             ])
+            ->add('nbGroups', IntegerType::class, [
+                'label' => 'Groupes (tarif réduit)',
+                'required' => false,
+                'empty_data' => '0',
+                'attr' => ['min' => 0],
+            ])
             ->add('isPMR', CheckboxType::class, [
                 'label' => 'PMR',
                 'required' => false,

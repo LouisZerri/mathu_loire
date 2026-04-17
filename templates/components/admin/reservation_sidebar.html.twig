@@ -4,16 +4,26 @@
     <div class="space-y-3 text-sm">
         <div class="flex justify-between">
             <span class="text-gray-500">Total places</span>
-            <span class="font-medium text-gray-900">{{ reservation.nbAdults + reservation.nbChildren + reservation.nbInvitations }}</span>
+            <span class="font-medium text-gray-900">{{ reservation.nbAdults + reservation.nbChildren + reservation.nbInvitations + reservation.nbGroups }}</span>
         </div>
+        {% if reservation.nbAdults > 0 %}
         <div class="flex justify-between">
             <span class="text-gray-500">Adultes</span>
             <span class="text-gray-900">{{ reservation.nbAdults }} x {{ reservation.representation.adultPrice|number_format(2, ',', ' ') }} €</span>
         </div>
+        {% endif %}
+        {% if reservation.nbChildren > 0 %}
         <div class="flex justify-between">
             <span class="text-gray-500">Enfants</span>
             <span class="text-gray-900">{{ reservation.nbChildren }} x {{ reservation.representation.childPrice|number_format(2, ',', ' ') }} €</span>
         </div>
+        {% endif %}
+        {% if reservation.nbGroups > 0 %}
+        <div class="flex justify-between">
+            <span class="text-gray-500">Groupes</span>
+            <span class="text-gray-900">{{ reservation.nbGroups }} x {{ (reservation.representation.groupPrice ?? reservation.representation.adultPrice)|number_format(2, ',', ' ') }} €</span>
+        </div>
+        {% endif %}
         {% if reservation.nbInvitations > 0 %}
         <div class="flex justify-between">
             <span class="text-gray-500">Invitations</span>

@@ -1,0 +1,166 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Caisse - {{ representation.show.title }} - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div>
+        <a href="{{ path('app_admin_representation_index') }}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Retour</a>
+        <h2 class="text-2xl font-bold text-gray-900 mt-1">Feuille de caisse</h2>
+        <p class="text-sm text-gray-500">{{ representation.show.title }} — {{ representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</p>
+    </div>
+    {% if register %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ register.status == 'closed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
+            {{ register.status == 'closed' ? 'Clôturée' : 'Ouverte' }}
+        </span>
+    {% endif %}
+</div>
+
+{% for flash in app.flashes('success') %}
+    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm mb-6">{{ flash }}</div>
+{% endfor %}
+{% for flash in app.flashes('error') %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6">{{ flash }}</div>
+{% endfor %}
+
+{% if not register %}
+    {# === OUVERTURE === #}
+    <div class="bg-white border border-gray-200 rounded-lg p-6 max-w-3xl">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Ouverture de caisse — Fond de caisse</h3>
+        <form method="post" action="{{ path('app_admin_cash_register_open', {id: representation.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('cash_open_' ~ representation.id) }}">
+
+            {% include 'admin/cash_register/_count_form.html.twig' with { prefix: '' } %}
+
+            <button type="submit" class="mt-4 px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800">
+                Ouvrir la caisse
+            </button>
+        </form>
+    </div>
+
+{% elseif register.status == 'open' %}
+    {# === CAISSE OUVERTE — CLÔTURE === #}
+    <div class="grid lg:grid-cols-2 gap-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 class="text-base font-semibold text-gray-900 mb-1">Fond de caisse (ouverture)</h3>
+            <p class="text-2xl font-bold text-gray-900 mb-2">{{ register.openingTotal|number_format(2, ',', ' ') }} €</p>
+            <p class="text-xs text-gray-400">Ouverte le {{ register.openedAt|format_datetime(pattern='d/MM/yyyy à HH:mm', locale='fr', timezone='Europe/Paris') }}{% if register.openedBy %} par {{ register.openedBy.firstName }}{% endif %}</p>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mt-6 max-w-4xl">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Clôture de caisse</h3>
+        <form method="post" action="{{ path('app_admin_cash_register_close', {id: representation.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('cash_close_' ~ representation.id) }}">
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Billets et pièces</h4>
+            {% include 'admin/cash_register/_count_form.html.twig' with { prefix: 'closing_' } %}
+
+            <h4 class="text-sm font-semibold text-gray-700 mt-6 mb-3">Chèques</h4>
+            <div id="cheques-container" class="space-y-2 mb-2">
+                <div class="flex gap-2">
+                    <input type="number" name="cheque_amounts[]" step="0.01" min="0" placeholder="Montant du chèque" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                </div>
+            </div>
+            <button type="button" onclick="addChequeRow()" class="text-xs text-blue-600 hover:text-blue-800 mb-4">+ Ajouter un chèque</button>
+
+            <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">Carte bancaire</h4>
+            <input type="number" name="closing_cb" step="0.01" min="0" value="0" class="w-48 px-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="Total CB">
+
+            <div class="mt-6">
+                <button type="submit" class="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800" onclick="return confirm('Clôturer la caisse ? Cette action est définitive.')">
+                    Clôturer la caisse
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    function addChequeRow() {
+        const container = document.getElementById('cheques-container');
+        const div = document.createElement('div');
+        div.className = 'flex gap-2';
+        div.innerHTML = '<input type="number" name="cheque_amounts[]" step="0.01" min="0" placeholder="Montant du chèque" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"><button type="button" onclick="this.parentElement.remove()" class="text-xs text-red-500 hover:text-red-700 px-2">Suppr.</button>';
+        container.appendChild(div);
+    }
+    </script>
+
+{% else %}
+    {# === CAISSE CLÔTURÉE — RAPPROCHEMENT === #}
+    <div class="grid lg:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-5 text-center">
+            <div class="text-xs text-gray-400 uppercase">Fond de caisse</div>
+            <div class="text-2xl font-bold text-gray-900 mt-1">{{ register.openingTotal|number_format(2, ',', ' ') }} €</div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-5 text-center">
+            <div class="text-xs text-gray-400 uppercase">Clôture (total)</div>
+            <div class="text-2xl font-bold text-gray-900 mt-1">{{ register.closingTotal|number_format(2, ',', ' ') }} €</div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-5 text-center">
+            <div class="text-xs text-gray-400 uppercase">Recettes perçues</div>
+            <div class="text-2xl font-bold text-gray-900 mt-1">{{ (register.closingTotal - register.openingTotal)|number_format(2, ',', ' ') }} €</div>
+        </div>
+    </div>
+
+    {% if reconciliation %}
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <div class="px-5 py-4 border-b border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-900">Rapprochement billetterie / caisse</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-xs text-gray-500 uppercase">
+                        <th class="px-4 py-3 text-left">Mode</th>
+                        <th class="px-4 py-3 text-right">Théorique (ventes)</th>
+                        <th class="px-4 py-3 text-right">Réel (caisse)</th>
+                        <th class="px-4 py-3 text-right">Écart</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr>
+                        <td class="px-4 py-3">Espèces</td>
+                        <td class="px-4 py-3 text-right">{{ reconciliation.theoreticalCash|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 text-right">{{ reconciliation.cashReceived|number_format(2, ',', ' ') }} €</td>
+                        {% set ecartCash = reconciliation.cashReceived - reconciliation.theoreticalCash %}
+                        <td class="px-4 py-3 text-right font-semibold {{ ecartCash == 0 ? 'text-green-600' : 'text-red-600' }}">{{ ecartCash|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3">Chèques</td>
+                        <td class="px-4 py-3 text-right">{{ reconciliation.theoreticalCheques|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 text-right">{{ reconciliation.chequesReceived|number_format(2, ',', ' ') }} €</td>
+                        {% set ecartCheques = reconciliation.chequesReceived - reconciliation.theoreticalCheques %}
+                        <td class="px-4 py-3 text-right font-semibold {{ ecartCheques == 0 ? 'text-green-600' : 'text-red-600' }}">{{ ecartCheques|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3">CB</td>
+                        <td class="px-4 py-3 text-right">{{ reconciliation.theoreticalCb|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 text-right">{{ reconciliation.cbReceived|number_format(2, ',', ' ') }} €</td>
+                        {% set ecartCb = reconciliation.cbReceived - reconciliation.theoreticalCb %}
+                        <td class="px-4 py-3 text-right font-semibold {{ ecartCb == 0 ? 'text-green-600' : 'text-red-600' }}">{{ ecartCb|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="border-t-2 border-gray-300 bg-gray-50">
+                        <td class="px-4 py-3 font-bold">TOTAL</td>
+                        <td class="px-4 py-3 text-right font-bold">{{ reconciliation.theoreticalTotal|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 text-right font-bold">{{ reconciliation.totalReceived|number_format(2, ',', ' ') }} €</td>
+                        <td class="px-4 py-3 text-right font-bold text-lg {{ reconciliation.difference == 0 ? 'text-green-600' : 'text-red-600' }}">
+                            {{ reconciliation.difference|number_format(2, ',', ' ') }} €
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    {% if reconciliation.theoreticalHelloasso > 0 %}
+    <p class="text-sm text-gray-500 mb-6">Paiements HelloAsso (en ligne) : {{ reconciliation.theoreticalHelloasso|number_format(2, ',', ' ') }} € — non inclus dans le rapprochement caisse.</p>
+    {% endif %}
+    {% endif %}
+
+    <p class="text-xs text-gray-400">
+        Clôturée le {{ register.closedAt|format_datetime(pattern='d/MM/yyyy à HH:mm', locale='fr', timezone='Europe/Paris') }}{% if register.closedBy %} par {{ register.closedBy.firstName }}{% endif %}
+    </p>
+{% endif %}
+{% endblock %}

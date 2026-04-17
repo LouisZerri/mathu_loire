@@ -147,6 +147,11 @@
             {% set places = places|merge(['Enfant']) %}
         {% endfor %}
     {% endif %}
+    {% if reservation.nbGroups > 0 %}
+        {% for i in 1..reservation.nbGroups %}
+            {% set places = places|merge(['Groupe']) %}
+        {% endfor %}
+    {% endif %}
     {% if reservation.nbInvitations > 0 %}
         {% for i in 1..reservation.nbInvitations %}
             {% set places = places|merge(['Invitation']) %}
@@ -213,6 +218,8 @@
                     {{ reservation.representation.adultPrice|number_format(2, ',', ' ') }} €
                 {% elseif places[i] == 'Enfant' %}
                     {{ reservation.representation.childPrice|number_format(2, ',', ' ') }} €
+                {% elseif places[i] == 'Groupe' %}
+                    {{ (reservation.representation.groupPrice ?? reservation.representation.adultPrice)|number_format(2, ',', ' ') }} €
                 {% else %}
                     INVITATION
                 {% endif %}

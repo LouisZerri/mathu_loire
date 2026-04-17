@@ -117,7 +117,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->select(
                 'r.spectatorCity as city',
                 'COUNT(r.id) as count',
-                'SUM(r.nbAdults + r.nbChildren + r.nbInvitations) as totalPlaces',
+                'SUM(r.nbAdults + r.nbChildren + r.nbInvitations + r.nbGroups) as totalPlaces',
             )
             ->where('r.status = :status')
             ->setParameter('status', 'validated')

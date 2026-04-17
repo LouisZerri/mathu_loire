@@ -1,0 +1,29 @@
+<div class="grid sm:grid-cols-2 gap-6">
+    <div>
+        <h5 class="text-xs text-gray-500 uppercase mb-2">Billets</h5>
+        <div class="space-y-2">
+            {% for d in [500, 200, 100, 50, 20, 10, 5] %}
+            <div class="flex items-center gap-3">
+                <span class="w-16 text-sm text-gray-700 text-right">{{ d }} €</span>
+                <span class="text-gray-400">×</span>
+                <input type="number" name="{{ prefix }}denom_{{ d }}" min="0" value="0"
+                       class="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-gray-900">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div>
+        <h5 class="text-xs text-gray-500 uppercase mb-2">Pièces</h5>
+        <div class="space-y-2">
+            {% for d in [2, 1, '0.5', '0.2', '0.1', '0.05', '0.02', '0.01'] %}
+            <div class="flex items-center gap-3">
+                <span class="w-16 text-sm text-gray-700 text-right">{{ d < 1 ? (d * 100)|number_format(0) ~ ' ct' : d ~ ' €' }}</span>
+                <span class="text-gray-400">×</span>
+                <input type="number" name="{{ prefix }}denom_{{ d|replace({'.': '_'}) }}" min="0" value="0"
+                       class="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-gray-900">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

@@ -227,7 +227,8 @@ class ReservationService
         $representation = $reservation->getRepresentation();
 
         return ($reservation->getNbAdults() * (float) $representation->getAdultPrice())
-             + ($reservation->getNbChildren() * (float) $representation->getChildPrice());
+             + ($reservation->getNbChildren() * (float) $representation->getChildPrice())
+             + ($reservation->getNbGroups() * (float) ($representation->getGroupPrice() ?? $representation->getAdultPrice()));
     }
 
 }

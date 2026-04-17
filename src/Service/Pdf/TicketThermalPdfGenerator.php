@@ -36,7 +36,7 @@ class TicketThermalPdfGenerator
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         // 80mm largeur, hauteur dynamique selon nb de billets (130mm par billet)
-        $totalPlaces = $reservation->getNbAdults() + $reservation->getNbChildren() + $reservation->getNbInvitations();
+        $totalPlaces = $reservation->getNbAdults() + $reservation->getNbChildren() + $reservation->getNbInvitations() + $reservation->getNbGroups();
         $heightPerTicket = 368.5; // ~130mm en points
         $totalHeight = max($heightPerTicket, $totalPlaces * $heightPerTicket);
         $dompdf->setPaper([0, 0, 226.77, $totalHeight], 'portrait');

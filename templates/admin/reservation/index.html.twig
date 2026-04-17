@@ -65,6 +65,7 @@
                     <th class="px-4 py-3">Date</th>
                     <th class="px-4 py-3 text-center">Ad.</th>
                     <th class="px-4 py-3 text-center">Enf.</th>
+                    <th class="px-4 py-3 text-center">Grp.</th>
                     <th class="px-4 py-3 text-center">Inv.</th>
                     <th class="px-4 py-3 text-center">PMR</th>
                     <th class="px-4 py-3"></th>
@@ -80,6 +81,7 @@
                     <td class="px-4 py-3 text-gray-500 whitespace-nowrap">{{ reservation.representation.datetime|format_datetime(pattern='d MMM yyyy HH:mm', locale='fr', timezone='Europe/Paris') }}</td>
                     <td class="px-4 py-3 text-center text-gray-500">{{ reservation.nbAdults }}</td>
                     <td class="px-4 py-3 text-center text-gray-500">{{ reservation.nbChildren }}</td>
+                    <td class="px-4 py-3 text-center text-gray-500">{{ reservation.nbGroups }}</td>
                     <td class="px-4 py-3 text-center text-gray-500">{{ reservation.nbInvitations }}</td>
                     <td class="px-4 py-3 text-center">
                         {% if reservation.isPMR %}
