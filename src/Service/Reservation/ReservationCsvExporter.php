@@ -20,12 +20,12 @@ class ReservationCsvExporter
      */
     public function export(array $reservations): string
     {
-        $csv = "N°;Statut;Nom;Prénom;Ville;Téléphone;Email;Spectacle;Date;Adultes;Enfants;Invitations;PMR;Total;Enregistrée le\n";
+        $csv = "N°;Statut;Nom;Prénom;Ville;Téléphone;Email;Spectacle;Date;Adultes;Enfants;Invitations;Groupes;PMR;Total;Enregistrée le\n";
 
         foreach ($reservations as $r) {
             $rep = $r->getRepresentation();
             $csv .= sprintf(
-                "%d;%s;%s;%s;%s;%s;%s;%s;%s;%d;%d;%d;%s;%s;%s\n",
+                "%d;%s;%s;%s;%s;%s;%s;%s;%s;%d;%d;%d;%d;%s;%s;%s\n",
                 $r->getId(),
                 $r->getStatus(),
                 $this->csvSafe($r->getSpectatorLastName()),
@@ -35,7 +35,7 @@ class ReservationCsvExporter
                 $this->csvSafe($r->getSpectatorEmail()),
                 $this->csvSafe($rep->getShow()->getTitle()),
                 $rep->getDatetime()->format('d/m/Y H:i'),
-                $r->getNbAdults(), $r->getNbChildren(), $r->getNbInvitations(),
+                $r->getNbAdults(), $r->getNbChildren(), $r->getNbInvitations(), $r->getNbGroups(),
                 $r->isPMR() ? 'Oui' : 'Non',
                 number_format($this->reservationService->computeTotal($r), 2, '.', ''),
                 $r->getCreatedAt()->format('d/m/Y H:i'),

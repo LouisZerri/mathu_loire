@@ -7,6 +7,7 @@ use App\Entity\Representation;
 use App\Entity\User;
 use App\Repository\CashRegisterRepository;
 use App\Service\Admin\CashRegisterService;
+use App\Service\Pdf\CashRegisterPdfGenerator;
 use App\Service\Security\AuditLogger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -118,6 +119,29 @@ class CashRegisterController extends AbstractController
         $this->addFlash('success', 'Caisse clôturée.');
 
         return $this->redirectToRoute('app_admin_cash_register', ['id' => $representation->getId()]);
+    }
+
+    /**
+     * Génère le PDF de la feuille de caisse clôturée.
+     *
+     * @return Response
+     */
+    #[Route('/{id}/pdf', name: 'app_admin_cash_register_pdf', requirements: ['id' => '\d+'])]
+    public function pdf(
+        CashRegister $register,
+        CashRegisterPdfGenerator $pdfGenerator,
+    ): Response {
+        if ($register->getStatus() !== CashRegister::STATUS_CLOSED) {
+            $this->addFlash('error', 'La caisse doit être clôturée pour générer le PDF.');
+            return $this->redirectToRoute('app_admin_cash_register', ['id' => $register->getRepresentation()->getId()]);
+        }
+
+        $pdf = $pdfGenerator->generate($register);
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="feuille-de-caisse-' . $register->getId() . '.pdf"',
+        ]);
     }
 
     /**

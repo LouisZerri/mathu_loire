@@ -220,6 +220,7 @@
                 <th class="text-center">Ad.</th>
                 <th class="text-center">Enf.</th>
                 <th class="text-center">Inv.</th>
+                <th class="text-center">Grp.</th>
                 <th class="text-center">PMR</th>
                 <th>Places</th>
                 <th>Paiement</th>
@@ -250,6 +251,7 @@
                 <td class="text-center">{{ res.nbAdults }}</td>
                 <td class="text-center">{{ res.nbChildren }}</td>
                 <td class="text-center">{{ res.nbInvitations }}</td>
+                <td class="text-center">{{ res.nbGroups }}</td>
                 <td class="text-center">{% if res.isPMR %}<span class="badge badge-pmr">PMR</span>{% endif %}</td>
                 <td>
                     {% set resAssignments = [] %}
@@ -271,6 +273,7 @@
                 <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalAdults }}</td>
                 <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalChildren }}</td>
                 <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalInvitations }}</td>
+                <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalGroups }}</td>
                 <td></td>
                 <td></td>
                 <td></td>

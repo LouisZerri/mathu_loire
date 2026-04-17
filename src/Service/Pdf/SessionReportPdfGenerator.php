@@ -50,12 +50,14 @@ class SessionReportPdfGenerator
         $totalAdults = 0;
         $totalChildren = 0;
         $totalInvitations = 0;
+        $totalGroups = 0;
         $totalRevenue = 0;
 
         foreach ($reservations as $res) {
             $totalAdults += $res->getNbAdults();
             $totalChildren += $res->getNbChildren();
             $totalInvitations += $res->getNbInvitations();
+            $totalGroups += $res->getNbGroups();
             $totalRevenue += $this->reservationService->computeTotal($res);
         }
 
@@ -83,6 +85,7 @@ class SessionReportPdfGenerator
             'totalAdults' => $totalAdults,
             'totalChildren' => $totalChildren,
             'totalInvitations' => $totalInvitations,
+            'totalGroups' => $totalGroups,
             'totalSpectators' => $totalSpectators,
             'totalRevenue' => $totalRevenue,
             'totalRefunded' => $totalRefunded,

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; font-size: 9px; }
+        .wrapper { padding: 15mm; }
+
+        .header { text-align: center; border-bottom: 2px solid #8b4572; padding-bottom: 4mm; margin-bottom: 5mm; }
+        .header .title { font-size: 16px; font-weight: 700; color: #8b4572; }
+        .header .show { font-size: 13px; font-weight: 700; color: #1f2937; margin-top: 2mm; }
+        .header .date { font-size: 10px; color: #666; }
+
+        .columns { display: table; width: 100%; }
+        .col { display: table-cell; width: 50%; vertical-align: top; padding: 0 3mm; }
+        .col:first-child { border-right: 1px solid #e5e7eb; }
+
+        h2 { font-size: 11px; font-weight: 700; color: #8b4572; margin-bottom: 3mm; text-transform: uppercase; }
+        h3 { font-size: 9px; font-weight: 600; color: #666; margin: 3mm 0 2mm; text-transform: uppercase; }
+
+        table.count { width: 100%; border-collapse: collapse; font-size: 8px; margin-bottom: 3mm; }
+        table.count th { text-align: left; font-size: 7px; color: #8b4572; text-transform: uppercase; padding: 1mm; border-bottom: 1px solid #ddd; }
+        table.count td { padding: 1mm; border-bottom: 1px solid #f0f0f0; }
+        table.count .text-center { text-align: center; }
+        table.count .text-right { text-align: right; }
+
+        .total-row { font-weight: 700; border-top: 2px solid #8b4572; padding-top: 2mm; margin-top: 2mm; font-size: 11px; }
+        .total-row td { padding-top: 2mm; }
+
+        table.reconciliation { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 5mm; }
+        table.reconciliation th { text-align: left; font-size: 8px; color: #8b4572; text-transform: uppercase; padding: 2mm; border-bottom: 1px solid #8b4572; }
+        table.reconciliation td { padding: 2mm; border-bottom: 1px solid #f0f0f0; }
+        table.reconciliation .text-right { text-align: right; }
+        table.reconciliation .font-bold { font-weight: 700; }
+        .text-green { color: #16a34a; }
+        .text-red { color: #dc2626; }
+
+        .cheques-list { font-size: 8px; margin-bottom: 2mm; }
+        .cheques-list td { padding: 0.5mm 1mm; }
+
+        .signature { margin-top: 8mm; padding-top: 4mm; border-top: 1px solid #e5e7eb; }
+        .footer { margin-top: 5mm; font-size: 7px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="header">
+        <div class="title">Feuille de Caisse - Billetterie</div>
+        <div class="show">{{ register.representation.show.title }}</div>
+        <div class="date">{{ register.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+    </div>
+
+    {% set bills = [500, 200, 100, 50, 20, 10, 5] %}
+    {% set coins = ['2', '1', '0.5', '0.2', '0.1', '0.05', '0.02', '0.01'] %}
+
+    <div class="columns">
+        <div class="col">
+            <h2>Fond de Caisse (ouverture)</h2>
+
+            <h3>Billets</h3>
+            <table class="count">
+                <thead><tr><th>Valeur</th><th class="text-center">Qté</th><th class="text-right">Sous-total</th></tr></thead>
+                <tbody>
+                    {% for d in bills %}
+                    {% set qty = register.openingCounts['' ~ d] ?? 0 %}
+                    <tr>
+                        <td>{{ d }} €</td>
+                        <td class="text-center">{{ qty }}</td>
+                        <td class="text-right">{{ (d * qty)|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h3>Pièces</h3>
+            <table class="count">
+                <thead><tr><th>Valeur</th><th class="text-center">Qté</th><th class="text-right">Sous-total</th></tr></thead>
+                <tbody>
+                    {% for d in coins %}
+                    {% set qty = register.openingCounts[d] ?? 0 %}
+                    {% set val = d|number_format(2) %}
+                    <tr>
+                        <td>{{ d * 1 < 1 ? ((d * 100)|round ~ ' cts') : (d ~ ' €') }}</td>
+                        <td class="text-center">{{ qty }}</td>
+                        <td class="text-right">{{ (d * qty)|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="total-row">
+                TOTAL FOND DE CAISSE : {{ register.openingTotal|number_format(2, ',', ' ') }} €
+            </div>
+        </div>
+
+        <div class="col">
+            <h2>Clôture de Caisse</h2>
+
+            <h3>Billets</h3>
+            <table class="count">
+                <thead><tr><th>Valeur</th><th class="text-center">Qté</th><th class="text-right">Sous-total</th></tr></thead>
+                <tbody>
+                    {% for d in bills %}
+                    {% set qty = (register.closingCounts['' ~ d]) ?? 0 %}
+                    <tr>
+                        <td>{{ d }} €</td>
+                        <td class="text-center">{{ qty }}</td>
+                        <td class="text-right">{{ (d * qty)|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h3>Pièces</h3>
+            <table class="count">
+                <thead><tr><th>Valeur</th><th class="text-center">Qté</th><th class="text-right">Sous-total</th></tr></thead>
+                <tbody>
+                    {% for d in coins %}
+                    {% set qty = (register.closingCounts[d]) ?? 0 %}
+                    <tr>
+                        <td>{{ d * 1 < 1 ? ((d * 100)|round ~ ' cts') : (d ~ ' €') }}</td>
+                        <td class="text-center">{{ qty }}</td>
+                        <td class="text-right">{{ (d * qty)|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if register.closingCheques|length > 0 %}
+            <h3>Chèques</h3>
+            <table class="cheques-list">
+                {% for cheque in register.closingCheques %}
+                <tr><td>Chèque {{ loop.index }}</td><td class="text-right">{{ cheque.amount|number_format(2, ',', ' ') }} €</td></tr>
+                {% endfor %}
+                <tr style="border-top: 1px solid #ccc; font-weight: 700;"><td>Total chèques</td><td class="text-right">{{ register.closingChequesTotal|number_format(2, ',', ' ') }} €</td></tr>
+            </table>
+            {% endif %}
+
+            <h3>Carte bancaire</h3>
+            <p style="font-size: 9px; margin-bottom: 3mm;">{{ (register.closingCb ?? 0)|number_format(2, ',', ' ') }} €</p>
+
+            <div class="total-row">
+                TOTAL CLÔTURE : {{ register.closingTotal|number_format(2, ',', ' ') }} €
+            </div>
+        </div>
+    </div>
+
+    <h2 style="margin-top: 6mm;">Rapprochement</h2>
+    <table class="reconciliation">
+        <thead>
+            <tr>
+                <th>Mode</th>
+                <th class="text-right">Théorique (ventes)</th>
+                <th class="text-right">Réel (caisse)</th>
+                <th class="text-right">Écart</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Espèces</td>
+                <td class="text-right">{{ reconciliation.theoreticalCash|number_format(2, ',', ' ') }} €</td>
+                <td class="text-right">{{ reconciliation.cashReceived|number_format(2, ',', ' ') }} €</td>
+                {% set ecart = reconciliation.cashReceived - reconciliation.theoreticalCash %}
+                <td class="text-right font-bold {{ ecart == 0 ? 'text-green' : 'text-red' }}">{{ ecart|number_format(2, ',', ' ') }} €</td>
+            </tr>
+            <tr>
+                <td>Chèques</td>
+                <td class="text-right">{{ reconciliation.theoreticalCheques|number_format(2, ',', ' ') }} €</td>
+                <td class="text-right">{{ reconciliation.chequesReceived|number_format(2, ',', ' ') }} €</td>
+                {% set ecart = reconciliation.chequesReceived - reconciliation.theoreticalCheques %}
+                <td class="text-right font-bold {{ ecart == 0 ? 'text-green' : 'text-red' }}">{{ ecart|number_format(2, ',', ' ') }} €</td>
+            </tr>
+            <tr>
+                <td>CB</td>
+                <td class="text-right">{{ reconciliation.theoreticalCb|number_format(2, ',', ' ') }} €</td>
+                <td class="text-right">{{ reconciliation.cbReceived|number_format(2, ',', ' ') }} €</td>
+                {% set ecart = reconciliation.cbReceived - reconciliation.theoreticalCb %}
+                <td class="text-right font-bold {{ ecart == 0 ? 'text-green' : 'text-red' }}">{{ ecart|number_format(2, ',', ' ') }} €</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr style="border-top: 2px solid #8b4572;">
+                <td class="font-bold" style="padding-top: 3mm;">TOTAL</td>
+                <td class="text-right font-bold" style="padding-top: 3mm;">{{ reconciliation.theoreticalTotal|number_format(2, ',', ' ') }} €</td>
+                <td class="text-right font-bold" style="padding-top: 3mm;">{{ reconciliation.totalReceived|number_format(2, ',', ' ') }} €</td>
+                <td class="text-right font-bold {{ reconciliation.difference == 0 ? 'text-green' : 'text-red' }}" style="padding-top: 3mm; font-size: 12px;">
+                    {{ reconciliation.difference|number_format(2, ',', ' ') }} €
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="signature">
+        <p style="font-size: 9px; color: #666;">Signature du billettiste : _________________________________</p>
+    </div>
+
+    <div class="footer">
+        Les Mathu'Loire — Édité le {{ 'now'|format_datetime(pattern='dd/MM/yyyy à HH:mm', locale='fr', timezone='Europe/Paris') }}
+    </div>
+</div>
+</body>
+</html>
