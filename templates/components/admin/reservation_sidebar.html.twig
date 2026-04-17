@@ -25,25 +25,80 @@
             <span class="font-bold text-gray-900 text-lg">{{ total|number_format(2, ',', ' ') }} €</span>
         </div>
 
-        {% if reservation.status == 'validated' %}
-        <div class="border-t border-gray-100 pt-3">
-            {% if reservation.payments|filter(p => p.type == 'payment')|length > 0 %}
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Payé</span>
-            {% else %}
-                <div class="flex items-center justify-between">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">À encaisser</span>
-                    <form method="post" action="{{ path('app_admin_reservation_mark_paid', { id: reservation.id }) }}">
-                        <input type="hidden" name="_token" value="{{ csrf_token('mark_paid_' ~ reservation.id) }}">
-                        <button type="submit" class="text-xs text-green-700 hover:text-green-900 font-medium">
-                            Marquer payé
-                        </button>
-                    </form>
-                </div>
-            {% endif %}
-        </div>
-        {% endif %}
     </div>
 </div>
+
+{% if reservation.status == 'validated' %}
+{% set paid = 0 %}
+{% for p in reservation.payments %}{% if p.type == 'payment' %}{% set paid = paid + p.amount %}{% endif %}{% endfor %}
+{% set remaining = total - paid %}
+
+<div class="bg-white border border-gray-200 rounded-lg p-5">
+    <h3 class="text-sm font-semibold text-gray-900 mb-3">Paiements</h3>
+
+    {% if reservation.payments|filter(p => p.type == 'payment')|length > 0 %}
+    <div class="space-y-2 mb-3">
+        {% for payment in reservation.payments %}
+        {% if payment.type == 'payment' %}
+        <div class="flex items-center justify-between text-sm bg-gray-50 rounded px-3 py-2">
+            <div>
+                <span class="font-medium text-gray-900">{{ payment.amount|number_format(2, ',', ' ') }} €</span>
+                <span class="text-gray-400">·</span>
+                <span class="text-gray-500">{{ payment.method }}</span>
+            </div>
+            {% if payment.method != 'helloasso' %}
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="document.getElementById('edit-payment-{{ payment.id }}').classList.toggle('hidden')" class="text-xs text-blue-500 hover:text-blue-700">Modifier</button>
+                <form method="post" action="{{ path('app_admin_reservation_delete_payment', { id: reservation.id, paymentId: payment.id }) }}" onsubmit="return confirm('Supprimer ce paiement ?')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_payment_' ~ payment.id) }}">
+                    <button type="submit" class="text-xs text-red-500 hover:text-red-700">Suppr.</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% if payment.method != 'helloasso' %}
+        <form id="edit-payment-{{ payment.id }}" method="post" action="{{ path('app_admin_reservation_edit_payment', { id: reservation.id, paymentId: payment.id }) }}" class="hidden bg-white border border-gray-200 rounded px-3 py-2 mt-1">
+            <input type="hidden" name="_token" value="{{ csrf_token('edit_payment_' ~ payment.id) }}">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <input type="number" name="amount" step="0.01" min="0.01" value="{{ payment.amount }}" class="px-2 py-1 border border-gray-300 rounded text-xs">
+                <select name="method" class="px-2 py-1 border border-gray-300 rounded text-xs">
+                    <option value="especes" {{ payment.method == 'especes' ? 'selected' : '' }}>Espèces</option>
+                    <option value="cheque" {{ payment.method == 'cheque' ? 'selected' : '' }}>Chèque</option>
+                    <option value="cb" {{ payment.method == 'cb' ? 'selected' : '' }}>CB</option>
+                </select>
+            </div>
+            <button type="submit" class="w-full px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">Enregistrer</button>
+        </form>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="flex justify-between text-sm mb-3 {{ remaining > 0 ? 'text-amber-700' : 'text-green-700' }} font-semibold">
+        <span>{% if remaining > 0 %}Reste à encaisser{% else %}Entièrement payé{% endif %}</span>
+        <span>{% if remaining > 0 %}{{ remaining|number_format(2, ',', ' ') }} €{% else %}✓{% endif %}</span>
+    </div>
+
+    {% if remaining > 0 %}
+    <form method="post" action="{{ path('app_admin_reservation_add_payment', { id: reservation.id }) }}" class="border-t border-gray-100 pt-3">
+        <input type="hidden" name="_token" value="{{ csrf_token('add_payment_' ~ reservation.id) }}">
+        <div class="grid grid-cols-2 gap-2 mb-2">
+            <input type="number" name="amount" step="0.01" min="0.01" max="{{ remaining }}" value="{{ remaining|number_format(2, '.', '') }}"
+                   class="px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="Montant">
+            <select name="method" class="px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                <option value="especes">Espèces</option>
+                <option value="cheque">Chèque</option>
+                <option value="cb">CB</option>
+            </select>
+        </div>
+        <button type="submit" class="w-full px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 transition-colors">
+            Encaisser
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
 
 <div class="bg-white border border-gray-200 rounded-lg p-5">
     <h3 class="text-sm font-semibold text-gray-900 mb-4">Historique</h3>
@@ -67,27 +122,6 @@
         {% endif %}
     </div>
 </div>
-
-{% if reservation.payments|length > 0 %}
-<div class="bg-white border border-gray-200 rounded-lg p-5">
-    <h3 class="text-sm font-semibold text-gray-900 mb-4">Paiements</h3>
-
-    <div class="space-y-2 text-sm">
-        {% for payment in reservation.payments %}
-        <div class="flex justify-between items-center">
-            <div>
-                <span class="text-gray-900">{{ payment.amount|number_format(2, ',', ' ') }} €</span>
-                <span class="text-gray-400">·</span>
-                <span class="text-gray-500">{{ payment.method }}</span>
-            </div>
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ payment.type == 'payment' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                {{ payment.type == 'payment' ? 'Payé' : 'Remboursé' }}
-            </span>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
 
 <div class="bg-white border border-gray-200 rounded-lg p-5">
     <h3 class="text-sm font-semibold text-gray-900 mb-4">Actions</h3>

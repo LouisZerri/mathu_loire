@@ -8,6 +8,7 @@ use App\Form\AdminReservationType;
 use App\Repository\RepresentationRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Security\AuditLogger;
+use App\Service\Reservation\ReservationCsvExporter;
 use App\Service\Reservation\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -85,7 +86,7 @@ class ReservationController extends AbstractController
         Request $request,
         ReservationRepository $reservationRepository,
         RepresentationRepository $representationRepository,
-        ReservationService $reservationService,
+        ReservationCsvExporter $csvExporter,
     ): Response {
         $repId = (int) $request->query->get('representation', 0);
         $status = $request->query->get('status', '');
@@ -98,7 +99,7 @@ class ReservationController extends AbstractController
 
         $reservations = $reservationRepository->findByFilters($representation, $status ?: null, 1, 10000, $yearFilter, $searchFilter);
 
-        $csv = $reservationService->exportCsv($reservations);
+        $csv = $csvExporter->export($reservations);
 
         // BOM UTF-8 : nécessaire pour qu'Excel interprète correctement les accents
         return new Response("\xEF\xBB\xBF" . $csv, 200, [

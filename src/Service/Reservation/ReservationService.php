@@ -144,56 +144,76 @@ class ReservationService
     }
 
     /**
-     * Exporte une liste de réservations au format CSV compatible Excel.
+     * Ajoute un paiement partiel ou total à une réservation.
      *
-     * @param array $reservations Liste des réservations à exporter
-     * @return string Contenu CSV avec en-têtes
+     * @param Reservation $reservation Réservation concernée
+     * @param string $method Mode de paiement (especes, cheque, cb, helloasso, guichet)
+     * @param float $amount Montant en euros
+     * @return Payment Le paiement créé
      */
-    public function exportCsv(array $reservations): string
-    {
-        $csv = "N°;Statut;Nom;Prénom;Ville;Téléphone;Email;Spectacle;Date;Adultes;Enfants;Invitations;PMR;Total;Enregistrée le\n";
-
-        foreach ($reservations as $r) {
-            $rep = $r->getRepresentation();
-            $csv .= sprintf(
-                "%d;%s;%s;%s;%s;%s;%s;%s;%s;%d;%d;%d;%s;%s;%s\n",
-                $r->getId(),
-                $r->getStatus(),
-                $this->csvSafe($r->getSpectatorLastName()),
-                $this->csvSafe($r->getSpectatorFirstName()),
-                $this->csvSafe($r->getSpectatorCity()),
-                $this->csvSafe($r->getSpectatorPhone()),
-                $this->csvSafe($r->getSpectatorEmail()),
-                $this->csvSafe($rep->getShow()->getTitle()),
-                $rep->getDatetime()->format('d/m/Y H:i'),
-                $r->getNbAdults(), $r->getNbChildren(), $r->getNbInvitations(),
-                $r->isPMR() ? 'Oui' : 'Non',
-                number_format($this->computeTotal($r), 2, '.', ''),
-                $r->getCreatedAt()->format('d/m/Y H:i'),
-            );
-        }
-
-        return $csv;
-    }
-
-    /**
-     * Enregistre un paiement manuel (au guichet) pour une réservation.
-     *
-     * @param Reservation $reservation Réservation à marquer comme payée
-     * @return void
-     */
-    public function markAsPaid(Reservation $reservation): void
+    public function addPayment(Reservation $reservation, string $method, float $amount): Payment
     {
         $payment = new Payment();
         $payment->setReservation($reservation);
-        $payment->setMethod('guichet');
-        $payment->setAmount((string) $this->computeTotal($reservation));
+        $payment->setMethod($method);
+        $payment->setAmount((string) $amount);
         $payment->setType('payment');
-        $payment->setTransactionId('guichet_' . $reservation->getId());
+        $payment->setTransactionId($method . '_' . $reservation->getId() . '_' . time());
         $payment->setCreatedAt(new \DateTimeImmutable());
 
         $this->em->persist($payment);
         $this->em->flush();
+
+        return $payment;
+    }
+
+    /**
+     * Modifie le mode de paiement d'un enregistrement existant.
+     *
+     * @param Payment $payment Paiement à modifier
+     * @param string $method Nouveau mode de paiement
+     * @param float|null $amount Nouveau montant (null = inchangé)
+     * @return void
+     */
+    public function editPayment(Payment $payment, string $method, ?float $amount = null): void
+    {
+        $payment->setMethod($method);
+        if ($amount !== null) {
+            $payment->setAmount((string) $amount);
+        }
+        $this->em->flush();
+    }
+
+    /**
+     * Supprime un enregistrement de paiement.
+     *
+     * @param Payment $payment Paiement à supprimer
+     * @return void
+     */
+    public function deletePayment(Payment $payment): void
+    {
+        $this->em->remove($payment);
+        $this->em->flush();
+    }
+
+    /**
+     * Calcule le montant restant à payer pour une réservation.
+     *
+     * @param Reservation $reservation Réservation à vérifier
+     * @return float Montant restant (0 si tout est payé)
+     */
+    public function getRemainingToPay(Reservation $reservation): float
+    {
+        $total = $this->computeTotal($reservation);
+        $paid = 0.0;
+
+        foreach ($reservation->getPayments() as $payment) {
+            if ($payment->getType() === 'payment') {
+                $paid += (float) $payment->getAmount();
+            }
+        }
+
+        return max(0, $total - $paid);
     }
 
     /**
@@ -210,20 +230,4 @@ class ReservationService
              + ($reservation->getNbChildren() * (float) $representation->getChildPrice());
     }
 
-    /**
-     * Nettoie une valeur pour l'export CSV en neutralisant les caractères dangereux.
-     *
-     * @param string $value La valeur brute à assainir
-     * @return string La valeur nettoyée pour insertion CSV
-     */
-    private function csvSafe(string $value): string
-    {
-        $value = str_replace(';', ',', $value);
-
-        if (isset($value[0]) && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
-            $value = "'" . $value;
-        }
-
-        return $value;
-    }
 }

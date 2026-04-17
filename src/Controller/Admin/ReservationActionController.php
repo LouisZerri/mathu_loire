@@ -109,26 +109,88 @@ class ReservationActionController extends AbstractController
     }
 
     /**
-     * Enregistre un paiement manuel (au guichet) pour une réservation non payée.
+     * Ajoute un paiement partiel ou total à une réservation.
      *
      * @return Response
      */
-    #[Route('/{id}/mark-paid', name: 'app_admin_reservation_mark_paid', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function markPaid(
+    #[Route('/{id}/add-payment', name: 'app_admin_reservation_add_payment', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function addPayment(
         Reservation $reservation,
         Request $request,
         ReservationService $reservationService,
         AuditLogger $audit,
     ): Response {
-        if ($this->isCsrfTokenValid('mark_paid_' . $reservation->getId(), (string) $request->request->get('_token'))) {
-            $reservationService->markAsPaid($reservation);
-            $audit->log(
-                AuditLogger::RESERVATION_UPDATE,
-                sprintf('Paiement au guichet enregistré pour la réservation #%d', $reservation->getId()),
-                'Reservation',
-                $reservation->getId(),
-            );
-            $this->addFlash('success', 'Paiement enregistré pour la réservation #' . $reservation->getId() . '.');
+        if ($this->isCsrfTokenValid('add_payment_' . $reservation->getId(), (string) $request->request->get('_token'))) {
+            $method = (string) $request->request->get('method', '');
+            $amount = (float) $request->request->get('amount', 0);
+
+            if ($method && $amount > 0) {
+                $reservationService->addPayment($reservation, $method, $amount);
+                $audit->log(AuditLogger::RESERVATION_UPDATE, sprintf('Paiement ajouté : %.2f€ en %s (résa #%d)', $amount, $method, $reservation->getId()), 'Reservation', $reservation->getId());
+                $this->addFlash('success', sprintf('Paiement de %.2f € (%s) enregistré.', $amount, $method));
+            } else {
+                $this->addFlash('error', 'Montant et mode de paiement requis.');
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
+    }
+
+    /**
+     * Modifie le mode de paiement et/ou le montant d'un enregistrement existant.
+     *
+     * @return Response
+     */
+    #[Route('/{id}/edit-payment/{paymentId}', name: 'app_admin_reservation_edit_payment', requirements: ['id' => '\d+', 'paymentId' => '\d+'], methods: ['POST'])]
+    public function editPayment(
+        Reservation $reservation,
+        int $paymentId,
+        Request $request,
+        ReservationService $reservationService,
+        AuditLogger $audit,
+    ): Response {
+        if ($this->isCsrfTokenValid('edit_payment_' . $paymentId, (string) $request->request->get('_token'))) {
+            $payment = null;
+            foreach ($reservation->getPayments() as $p) {
+                if ($p->getId() === $paymentId) { $payment = $p; break; }
+            }
+
+            if ($payment && $payment->getType() === 'payment') {
+                $method = (string) $request->request->get('method', $payment->getMethod());
+                $amount = (float) $request->request->get('amount', (float) $payment->getAmount());
+                $reservationService->editPayment($payment, $method, $amount);
+                $audit->log(AuditLogger::RESERVATION_UPDATE, sprintf('Paiement #%d modifié : %.2f€ en %s (résa #%d)', $paymentId, $amount, $method, $reservation->getId()), 'Reservation', $reservation->getId());
+                $this->addFlash('success', 'Paiement modifié.');
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
+    }
+
+    /**
+     * Supprime un enregistrement de paiement.
+     *
+     * @return Response
+     */
+    #[Route('/{id}/delete-payment/{paymentId}', name: 'app_admin_reservation_delete_payment', requirements: ['id' => '\d+', 'paymentId' => '\d+'], methods: ['POST'])]
+    public function deletePayment(
+        Reservation $reservation,
+        int $paymentId,
+        Request $request,
+        ReservationService $reservationService,
+        AuditLogger $audit,
+    ): Response {
+        if ($this->isCsrfTokenValid('delete_payment_' . $paymentId, (string) $request->request->get('_token'))) {
+            $payment = null;
+            foreach ($reservation->getPayments() as $p) {
+                if ($p->getId() === $paymentId && $p->getType() === 'payment') { $payment = $p; break; }
+            }
+
+            if ($payment) {
+                $reservationService->deletePayment($payment);
+                $audit->log(AuditLogger::RESERVATION_UPDATE, sprintf('Paiement #%d supprimé (résa #%d)', $paymentId, $reservation->getId()), 'Reservation', $reservation->getId());
+                $this->addFlash('success', 'Paiement supprimé.');
+            }
         }
 
         return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
