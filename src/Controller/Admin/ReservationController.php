@@ -116,7 +116,7 @@ class ReservationController extends AbstractController
     public function new(Request $request, ReservationService $reservationService, AuditLogger $audit): Response
     {
         $reservation = new Reservation();
-        $form = $this->createForm(AdminReservationType::class, $reservation);
+        $form = $this->createForm(AdminReservationType::class, $reservation, ['show_payment_method' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -126,7 +126,8 @@ class ReservationController extends AbstractController
                 $this->addFlash('error', 'Veuillez saisir au moins une place.');
             } else {
                 $user = $this->getUser();
-                $reservationService->createManual($reservation, $user instanceof User ? $user : null);
+                $paymentMethod = $form->has('paymentMethod') ? $form->get('paymentMethod')->getData() : null;
+                $reservationService->createManual($reservation, $user instanceof User ? $user : null, $paymentMethod);
 
                 $audit->log(AuditLogger::RESERVATION_CREATE, sprintf('Création manuelle de la réservation #%d (%s %s)', $reservation->getId(), $reservation->getSpectatorFirstName(), $reservation->getSpectatorLastName()), 'Reservation', $reservation->getId());
                 $this->addFlash('success', 'Réservation #' . $reservation->getId() . ' créée.');

@@ -93,12 +93,27 @@ class AdminReservationType extends AbstractType
                 'required' => false,
                 'attr' => ['rows' => 3],
             ]);
+
+        if ($options['show_payment_method']) {
+            $builder->add('paymentMethod', ChoiceType::class, [
+                'label' => 'Mode de paiement',
+                'mapped' => false,
+                'required' => false,
+                'placeholder' => 'Pas de paiement immédiat',
+                'choices' => [
+                    'Espèces' => 'especes',
+                    'Chèque' => 'cheque',
+                    'Carte bancaire' => 'cb',
+                ],
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Reservation::class,
+            'show_payment_method' => false,
         ]);
     }
 }

@@ -79,13 +79,25 @@
             </div>
         </div>
 
-        <div class="px-8 pb-8 pt-2">
+        <div class="px-8 pb-8 pt-2 space-y-3">
             <a href="{{ path('app_reservation_pay', { id: representation.id }) }}"
                class="block w-full bg-gray-900 text-white py-3.5 rounded-lg text-sm font-semibold hover:bg-gray-800 transition-colors text-center">
-                Procéder au paiement — {{ total|number_format(2, ',', ' ') }} €
+                Payer en ligne — {{ total|number_format(2, ',', ' ') }} €
             </a>
-            <p class="text-xs text-gray-400 text-center mt-3">Paiement sécurisé via HelloAsso</p>
-            <p class="text-xs text-gray-400 text-center mt-1">Une contribution à HelloAsso sera ajoutée lors du paiement (plateforme gratuite pour les associations).</p>
+            <p class="text-xs text-gray-400 text-center">Paiement sécurisé via HelloAsso. Une contribution à HelloAsso pourra être ajoutée.</p>
+
+            <div class="relative flex items-center justify-center">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                <span class="relative bg-white px-3 text-xs text-gray-400">ou</span>
+            </div>
+
+            <form method="post" action="{{ path('app_reservation_box_office', { id: representation.id }) }}">
+                <button type="submit"
+                        class="w-full border border-gray-300 text-gray-700 py-3 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                    Réserver — paiement au guichet
+                </button>
+            </form>
+            <p class="text-xs text-gray-400 text-center">Vous réglerez directement à la billetterie le soir du spectacle.</p>
         </div>
     </div>
 </section>

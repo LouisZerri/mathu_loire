@@ -65,7 +65,14 @@
             </table>
 
             <div class="total">Total billetterie : {{ total|number_format(2, ',', ' ') }} €</div>
-            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">Le montant débité peut inclure une contribution à HelloAsso (plateforme de paiement).</div>
+            {% if reservation.payments|length > 0 %}
+                <div style="font-size: 12px; color: #16a34a; margin-top: 4px; font-weight: 600;">Payé en ligne</div>
+                <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;">Le montant débité peut inclure une contribution à HelloAsso.</div>
+            {% else %}
+                <div style="font-size: 13px; color: #d97706; margin-top: 6px; font-weight: 600; background: #fffbeb; padding: 8px 12px; border-radius: 6px; border: 1px solid #fbbf24;">
+                    Reste à régler au guichet : {{ total|number_format(2, ',', ' ') }} €
+                </div>
+            {% endif %}
 
             <div class="section" style="margin-top: 20px;">
                 <div class="section-title">Réservé par</div>

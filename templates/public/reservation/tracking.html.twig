@@ -69,6 +69,17 @@
                             <td class="pt-3 font-semibold text-gray-900">Total</td>
                             <td class="pt-3 text-right text-lg font-bold text-gray-900">{{ total|number_format(2, ',', ' ') }} €</td>
                         </tr>
+                        {% if reservation.status == 'validated' %}
+                        <tr>
+                            <td colspan="2" class="pt-2">
+                                {% if reservation.payments|length > 0 %}
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Réglé en ligne</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">À régler au guichet : {{ total|number_format(2, ',', ' ') }} €</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
                     </tfoot>
                 </table>
             </div>

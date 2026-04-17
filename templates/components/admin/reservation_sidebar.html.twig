@@ -24,6 +24,24 @@
             <span class="font-semibold text-gray-900">Total</span>
             <span class="font-bold text-gray-900 text-lg">{{ total|number_format(2, ',', ' ') }} €</span>
         </div>
+
+        {% if reservation.status == 'validated' %}
+        <div class="border-t border-gray-100 pt-3">
+            {% if reservation.payments|filter(p => p.type == 'payment')|length > 0 %}
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Payé</span>
+            {% else %}
+                <div class="flex items-center justify-between">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">À encaisser</span>
+                    <form method="post" action="{{ path('app_admin_reservation_mark_paid', { id: reservation.id }) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('mark_paid_' ~ reservation.id) }}">
+                        <button type="submit" class="text-xs text-green-700 hover:text-green-900 font-medium">
+                            Marquer payé
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 

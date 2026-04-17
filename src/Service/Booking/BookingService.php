@@ -214,4 +214,21 @@ class BookingService
 
         return $reservation;
     }
+
+    /**
+     * Crée une réservation sans paiement en ligne (règlement prévu au guichet).
+     *
+     * @param array $draft Données du brouillon stocké en session
+     * @param Representation $representation Représentation concernée
+     * @return Reservation Réservation confirmée
+     */
+    public function createBoxOfficeReservation(array $draft, Representation $representation): Reservation
+    {
+        $reservation = $this->reservationService->createFromDraft($draft, $representation);
+        $this->reservationService->confirm($reservation);
+        $this->reservationMailer->sendConfirmation($reservation);
+        $this->logger->info('Réservation #{id} créée (paiement au guichet).', ['id' => $reservation->getId()]);
+
+        return $reservation;
+    }
 }

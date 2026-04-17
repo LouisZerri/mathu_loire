@@ -109,6 +109,32 @@ class ReservationActionController extends AbstractController
     }
 
     /**
+     * Enregistre un paiement manuel (au guichet) pour une réservation non payée.
+     *
+     * @return Response
+     */
+    #[Route('/{id}/mark-paid', name: 'app_admin_reservation_mark_paid', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function markPaid(
+        Reservation $reservation,
+        Request $request,
+        ReservationService $reservationService,
+        AuditLogger $audit,
+    ): Response {
+        if ($this->isCsrfTokenValid('mark_paid_' . $reservation->getId(), (string) $request->request->get('_token'))) {
+            $reservationService->markAsPaid($reservation);
+            $audit->log(
+                AuditLogger::RESERVATION_UPDATE,
+                sprintf('Paiement au guichet enregistré pour la réservation #%d', $reservation->getId()),
+                'Reservation',
+                $reservation->getId(),
+            );
+            $this->addFlash('success', 'Paiement enregistré pour la réservation #' . $reservation->getId() . '.');
+        }
+
+        return $this->redirectToRoute('app_admin_reservation_edit', ['id' => $reservation->getId()]);
+    }
+
+    /**
      * Génère et affiche le PDF des billets thermiques pour une réservation.
      *
      * @return Response

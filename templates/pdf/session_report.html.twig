@@ -141,6 +141,20 @@
             background: #dbeafe;
             color: #1e40af;
         }
+
+        .badge-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-refunded {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .section-cancelled td {
+            color: #991b1b;
+        }
     </style>
 </head>
 <body>
@@ -179,8 +193,18 @@
         </div>
         <div class="stat-box">
             <div class="stat-value">{{ totalRevenue|number_format(2, ',', ' ') }} €</div>
-            <div class="stat-label">Recettes</div>
+            <div class="stat-label">Recettes brutes</div>
         </div>
+        {% if totalRefunded > 0 %}
+        <div class="stat-box">
+            <div class="stat-value" style="color: #991b1b;">-{{ totalRefunded|number_format(2, ',', ' ') }} €</div>
+            <div class="stat-label">Remboursements</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ (totalRevenue - totalRefunded)|number_format(2, ',', ' ') }} €</div>
+            <div class="stat-label">Recettes nettes</div>
+        </div>
+        {% endif %}
     </div>
 
     <h2>Liste des réservations</h2>
@@ -198,12 +222,25 @@
                 <th class="text-center">Inv.</th>
                 <th class="text-center">PMR</th>
                 <th>Places</th>
+                <th>Paiement</th>
                 <th class="text-right">Total</th>
             </tr>
         </thead>
         <tbody>
             {% for res in reservations %}
             {% set resTotal = (res.nbAdults * representation.adultPrice) + (res.nbChildren * representation.childPrice) %}
+            {% set paymentLabel = 'À encaisser' %}
+            {% for payment in res.payments %}
+                {% if payment.type == 'payment' %}
+                    {% if payment.method == 'helloasso' %}{% set paymentLabel = 'HelloAsso' %}
+                    {% elseif payment.method == 'especes' %}{% set paymentLabel = 'Espèces' %}
+                    {% elseif payment.method == 'cheque' %}{% set paymentLabel = 'Chèque' %}
+                    {% elseif payment.method == 'cb' %}{% set paymentLabel = 'CB' %}
+                    {% elseif payment.method == 'guichet' %}{% set paymentLabel = 'Guichet' %}
+                    {% else %}{% set paymentLabel = payment.method %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
             <tr>
                 <td>{{ res.id }}</td>
                 <td class="font-bold">{{ res.spectatorLastName|upper }}</td>
@@ -223,6 +260,7 @@
                     {% endfor %}
                     {{ resAssignments|join(', ')|default('—') }}
                 </td>
+                <td>{{ paymentLabel }}</td>
                 <td class="text-right font-bold">{{ resTotal|number_format(2, ',', ' ') }} €</td>
             </tr>
             {% endfor %}
@@ -235,10 +273,66 @@
                 <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalInvitations }}</td>
                 <td></td>
                 <td></td>
+                <td></td>
                 <td class="text-right font-bold" style="padding-top: 3mm;">{{ totalRevenue|number_format(2, ',', ' ') }} €</td>
             </tr>
         </tfoot>
     </table>
+
+    {% if cancelledReservations|length > 0 %}
+    <h2>Annulations & remboursements</h2>
+
+    <table class="data">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Ville</th>
+                <th class="text-center">Ad.</th>
+                <th class="text-center">Enf.</th>
+                <th class="text-center">Statut</th>
+                <th class="text-right">Montant initial</th>
+                <th class="text-right">Remboursé</th>
+            </tr>
+        </thead>
+        <tbody class="section-cancelled">
+            {% for res in cancelledReservations %}
+            {% set resTotal = (res.nbAdults * representation.adultPrice) + (res.nbChildren * representation.childPrice) %}
+            {% set refundAmount = 0 %}
+            {% for payment in res.payments %}
+                {% if payment.type == 'refund' %}
+                    {% set refundAmount = refundAmount + payment.amount|abs %}
+                {% endif %}
+            {% endfor %}
+            <tr>
+                <td>{{ res.id }}</td>
+                <td class="font-bold">{{ res.spectatorLastName|upper }}</td>
+                <td>{{ res.spectatorFirstName }}</td>
+                <td>{{ res.spectatorCity }}</td>
+                <td class="text-center">{{ res.nbAdults }}</td>
+                <td class="text-center">{{ res.nbChildren }}</td>
+                <td class="text-center">
+                    {% if refundAmount > 0 %}
+                        <span class="badge badge-refunded">Remboursée</span>
+                    {% else %}
+                        <span class="badge badge-cancelled">Annulée</span>
+                    {% endif %}
+                </td>
+                <td class="text-right">{{ resTotal|number_format(2, ',', ' ') }} €</td>
+                <td class="text-right font-bold">{% if refundAmount > 0 %}-{{ refundAmount|number_format(2, ',', ' ') }} €{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="border-top: 2px solid #991b1b;">
+                <td colspan="7" class="font-bold" style="padding-top: 3mm;">TOTAL REMBOURSEMENTS</td>
+                <td></td>
+                <td class="text-right font-bold" style="padding-top: 3mm; color: #991b1b;">{% if totalRefunded > 0 %}-{{ totalRefunded|number_format(2, ',', ' ') }} €{% else %}0,00 €{% endif %}</td>
+            </tr>
+        </tfoot>
+    </table>
+    {% endif %}
 
     <div class="footer">
         <div class="footer-left">

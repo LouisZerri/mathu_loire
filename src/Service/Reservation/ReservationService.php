@@ -2,6 +2,7 @@
 
 namespace App\Service\Reservation;
 
+use App\Entity\Payment;
 use App\Entity\Reservation;
 use App\Entity\Representation;
 use App\Entity\User;
@@ -111,13 +112,14 @@ class ReservationService
     }
 
     /**
-     * Crée manuellement une réservation depuis l'interface d'administration.
+     * Crée manuellement une réservation depuis l'interface d'administration, avec paiement optionnel.
      *
      * @param Reservation $reservation Réservation à persister
      * @param User|null $createdBy Utilisateur ayant créé la réservation
+     * @param string|null $paymentMethod Mode de paiement (especes, cheque, cb) ou null si pas de paiement immédiat
      * @return void
      */
-    public function createManual(Reservation $reservation, ?User $createdBy): void
+    public function createManual(Reservation $reservation, ?User $createdBy, ?string $paymentMethod = null): void
     {
         $reservation->setStatus('validated');
         $reservation->setCreatedBy($createdBy);
@@ -126,6 +128,19 @@ class ReservationService
 
         $this->em->persist($reservation);
         $this->em->flush();
+
+        if ($paymentMethod) {
+            $payment = new Payment();
+            $payment->setReservation($reservation);
+            $payment->setMethod($paymentMethod);
+            $payment->setAmount((string) $this->computeTotal($reservation));
+            $payment->setType('payment');
+            $payment->setTransactionId($paymentMethod . '_' . $reservation->getId());
+            $payment->setCreatedAt(new \DateTimeImmutable());
+
+            $this->em->persist($payment);
+            $this->em->flush();
+        }
     }
 
     /**
@@ -159,6 +174,26 @@ class ReservationService
         }
 
         return $csv;
+    }
+
+    /**
+     * Enregistre un paiement manuel (au guichet) pour une réservation.
+     *
+     * @param Reservation $reservation Réservation à marquer comme payée
+     * @return void
+     */
+    public function markAsPaid(Reservation $reservation): void
+    {
+        $payment = new Payment();
+        $payment->setReservation($reservation);
+        $payment->setMethod('guichet');
+        $payment->setAmount((string) $this->computeTotal($reservation));
+        $payment->setType('payment');
+        $payment->setTransactionId('guichet_' . $reservation->getId());
+        $payment->setCreatedAt(new \DateTimeImmutable());
+
+        $this->em->persist($payment);
+        $this->em->flush();
     }
 
     /**

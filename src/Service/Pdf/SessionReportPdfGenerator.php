@@ -61,15 +61,31 @@ class SessionReportPdfGenerator
 
         $totalSpectators = $totalAdults + $totalChildren + $totalInvitations;
 
+        $cancelledReservations = $this->reservationRepository->findBy(
+            ['representation' => $representation, 'status' => 'cancelled'],
+            ['spectatorLastName' => 'ASC']
+        );
+
+        $totalRefunded = 0.0;
+        foreach ($cancelledReservations as $res) {
+            foreach ($res->getPayments() as $payment) {
+                if ($payment->getType() === 'refund') {
+                    $totalRefunded += abs((float) $payment->getAmount());
+                }
+            }
+        }
+
         $html = $this->twig->render('pdf/session_report.html.twig', [
             'representation' => $representation,
             'reservations' => $reservations,
+            'cancelledReservations' => $cancelledReservations,
             'assignmentMap' => $assignmentMap,
             'totalAdults' => $totalAdults,
             'totalChildren' => $totalChildren,
             'totalInvitations' => $totalInvitations,
             'totalSpectators' => $totalSpectators,
             'totalRevenue' => $totalRevenue,
+            'totalRefunded' => $totalRefunded,
             'totalReservations' => count($reservations),
         ]);
 

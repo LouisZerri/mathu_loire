@@ -183,6 +183,34 @@ class BookingController extends AbstractController
     }
 
     /**
+     * Crée la réservation sans paiement en ligne (règlement au guichet).
+     *
+     * @return Response
+     */
+    #[Route('/reserver-guichet/{id}', name: 'app_reservation_box_office', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function boxOffice(int $id, Request $request): Response
+    {
+        $session = $request->getSession();
+        $draft = $session->get('reservation_draft');
+        if (!$draft || ($draft['representation_id'] ?? 0) !== $id) {
+            return $this->redirectToRoute('app_reservation_new', ['id' => $id]);
+        }
+
+        $representation = $this->representationRepository->find($id);
+        if (!$representation) {
+            throw $this->createNotFoundException();
+        }
+
+        $reservation = $this->bookingService->createBoxOfficeReservation($draft, $representation);
+        $session->remove('reservation_draft');
+
+        return $this->redirectToRoute('app_reservation_confirmation', [
+            'id' => $reservation->getId(),
+            'token' => $reservation->getToken(),
+        ]);
+    }
+
+    /**
      * Affiche la page de confirmation après une réservation réussie.
      *
      * @return Response
