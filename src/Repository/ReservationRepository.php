@@ -156,7 +156,8 @@ class ReservationRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('r')
             ->join('r.representation', 'rep')
             ->join('rep.show', 's')
-            ->addSelect('rep', 's')
+            ->leftJoin('r.payments', 'p')
+            ->addSelect('rep', 's', 'p')
             ->orderBy('r.createdAt', 'DESC');
 
         if ($representation) {
