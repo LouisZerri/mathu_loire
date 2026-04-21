@@ -189,8 +189,7 @@ src/
     ├── DashboardService.php
     ├── ReportService.php
     ├── AuditLogger.php
-    ├── TicketPdfGenerator.php           # Billet A4
-    ├── TicketThermalPdfGenerator.php    # Billet 80mm
+    ├── TicketPdfGenerator.php           # Billet A4 (email)
     ├── SessionReportPdfGenerator.php
     └── SeatPlanPdfGenerator.php
 
@@ -510,6 +509,22 @@ Voir le fichier [`note.txt`](./note.txt) pour les instructions complètes.
 
 - Les emails sont envoyés en **synchrone** (pas besoin de worker Messenger ni supervisord)
 - Les crons se configurent depuis l'espace client OVH
+
+### Impression directe des billets au guichet
+
+La page `/admin/reservations/{id}/print` est une page HTML conçue pour une imprimante thermique 80mm (ticket de caisse). Le `window.print()` est déclenché automatiquement à l'ouverture, et chaque billet est sur sa propre feuille (`page-break-after`).
+
+Pour supprimer la boîte de dialogue Windows d'impression, configurer le poste du guichet comme suit :
+
+1. Installer le driver de l'imprimante thermique et la définir comme **imprimante par défaut** du système
+2. Dans le format de papier par défaut de l'imprimante, choisir "80mm × 297mm" (ou équivalent rouleau continu)
+3. Créer un raccourci Chrome avec le flag `--kiosk-printing` :
+   ```
+   chrome.exe --kiosk-printing https://app.les-mathuloire.com
+   ```
+4. Lancer Chrome via ce raccourci au guichet : les clics sur "Imprimer les billets" déclenchent l'impression silencieuse, sans dialog.
+
+Sans `--kiosk-printing`, le dialog Windows apparaît normalement et l'utilisateur valide à la main — le comportement reste fonctionnel.
 
 ---
 

@@ -7,7 +7,6 @@ use App\Service\Security\AuditLogger;
 use App\Service\HelloAsso\HelloAssoPaymentHandler;
 use App\Service\Reservation\ReservationMailer;
 use App\Service\Reservation\ReservationService;
-use App\Service\Pdf\TicketThermalPdfGenerator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -197,20 +196,23 @@ class ReservationActionController extends AbstractController
     }
 
     /**
-     * Génère et affiche le PDF des billets thermiques pour une réservation.
+     * Affiche la page HTML d'impression directe des billets (format 80mm, window.print() auto).
      *
      * @return Response
      */
     #[Route('/{id}/print', name: 'app_admin_reservation_print', requirements: ['id' => '\d+'])]
-    public function print(
-        Reservation $reservation,
-        TicketThermalPdfGenerator $pdfGenerator,
-    ): Response {
-        $pdf = $pdfGenerator->generate($reservation);
+    public function print(Reservation $reservation): Response
+    {
+        $places = array_merge(
+            array_fill(0, $reservation->getNbAdults(), 'Adulte'),
+            array_fill(0, $reservation->getNbChildren(), 'Enfant'),
+            array_fill(0, $reservation->getNbGroups(), 'Groupe'),
+            array_fill(0, $reservation->getNbInvitations(), 'Invitation'),
+        );
 
-        return new Response($pdf, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => sprintf('inline; filename="billets-thermal-%d.pdf"', $reservation->getId()),
+        return $this->render('admin/reservation/print_tickets.html.twig', [
+            'reservation' => $reservation,
+            'places' => $places,
         ]);
     }
 }
