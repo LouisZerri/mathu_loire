@@ -150,8 +150,8 @@
         </form>
 
         <a href="{{ path('app_admin_reservation_print', { id: reservation.id }) }}" target="_blank"
-           class="block w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
-            Imprimer les billets (80mm)
+           class="block w-full px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors text-center">
+            Imprimer les billets
         </a>
 
         {% if reservation.status != 'cancelled' %}

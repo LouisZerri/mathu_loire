@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Impression billets - Réservation #{{ reservation.id }}</title>
+    <style>
+        @page { size: 80mm 120mm; margin: 0; }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        body { font-family: Helvetica, Arial, sans-serif; color: #333; font-size: 10px; background: #e5e7eb; min-height: 100vh; }
+
+        .toolbar {
+            background: #1f2937; color: #fff; padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .toolbar .title { font-size: 14px; font-weight: 600; }
+        .toolbar .actions { display: flex; gap: 8px; }
+        .toolbar button, .toolbar a {
+            background: #8b4572; color: #fff; border: 0; padding: 8px 16px;
+            font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer;
+            text-decoration: none;
+        }
+        .toolbar .secondary { background: transparent; border: 1px solid #4b5563; }
+        .toolbar button:hover { background: #6d365a; }
+
+        .sheet { width: 80mm; margin: 20px auto; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .ticket {
+            width: 80mm;
+            height: 120mm;
+            padding: 3mm;
+            page-break-after: always;
+            page-break-inside: avoid;
+            overflow: hidden;
+        }
+        .ticket:last-child { page-break-after: auto; }
+
+        .ticket-header {
+            background: #8b4572;
+            color: #fff;
+            padding: 4mm 3mm;
+            text-align: center;
+        }
+        .ticket-header .logo { font-size: 14px; font-weight: 700; letter-spacing: 0.5px; }
+        .ticket-header .sub { font-size: 7px; opacity: 0.7; margin-top: 1mm; }
+
+        .ticket-body { padding: 3mm; }
+
+        .show-title {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1f2937;
+            padding: 3mm 0;
+            border-bottom: 1px dashed #ddd;
+            margin-bottom: 3mm;
+        }
+
+        .info-line { display: table; width: 100%; margin-bottom: 1.5mm; }
+        .info-label {
+            display: table-cell;
+            font-size: 7px;
+            color: #8b4572;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            width: 18mm;
+            vertical-align: top;
+            font-weight: 600;
+        }
+        .info-value { display: table-cell; font-size: 10px; font-weight: 500; color: #1f2937; }
+
+        .separator { border-top: 1px dashed #ddd; margin: 3mm 0; }
+
+        .place-block {
+            background: #f3e8ee;
+            border: 1px solid #8b4572;
+            border-radius: 2px;
+            text-align: center;
+            padding: 3mm;
+            margin: 3mm 0;
+        }
+        .place-block .place-label {
+            font-size: 7px;
+            color: #8b4572;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .place-block .place-value { font-size: 24px; font-weight: 700; color: #8b4572; margin-top: 1mm; }
+
+        .price-block { text-align: center; font-size: 14px; font-weight: 700; color: #1f2937; padding: 2mm 0; }
+
+        .ticket-footer {
+            background: #8b4572;
+            color: #fff;
+            padding: 2mm 3mm;
+            font-size: 7px;
+            text-align: center;
+        }
+        .ticket-footer .billet-num { font-weight: 600; }
+
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none; }
+            .sheet { margin: 0; box-shadow: none; width: 80mm; }
+            .ticket { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="title">Réservation #{{ reservation.id }} — {{ reservation.spectatorLastName|upper }} {{ reservation.spectatorFirstName }} ({{ places|length }} billet{{ places|length > 1 ? 's' : '' }})</div>
+        <div class="actions">
+            <button type="button" onclick="window.print()">Imprimer</button>
+            <a href="{{ path('app_admin_reservation_edit', { id: reservation.id }) }}" class="secondary">Fermer</a>
+        </div>
+    </div>
+
+    <div class="sheet">
+        {% set seatAssignments = [] %}
+        {% for sa in reservation.seatAssignments %}
+            {% if sa.status == 'assigned' %}
+                {% set seatAssignments = seatAssignments|merge([sa]) %}
+            {% endif %}
+        {% endfor %}
+
+        {% if places|length > 0 %}
+        {% for i in 0..(places|length - 1) %}
+        <div class="ticket">
+            <div class="ticket-header">
+                <div class="logo">Les Mathu'Loire</div>
+                <div class="sub">Association Les Mathu'Loire — www.les-mathuloire.com</div>
+            </div>
+
+            <div class="ticket-body">
+                <div class="show-title">{{ reservation.representation.show.title }}</div>
+
+                <div class="info-line">
+                    <div class="info-label">Date</div>
+                    <div class="info-value">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+                </div>
+
+                <div class="info-line">
+                    <div class="info-label">Heure</div>
+                    <div class="info-value">{{ reservation.representation.datetime|format_datetime(pattern='HH:mm', locale='fr', timezone='Europe/Paris') }}</div>
+                </div>
+
+                <div class="info-line">
+                    <div class="info-label">Salle</div>
+                    <div class="info-value">Espace Lézin Moisseron</div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="info-line">
+                    <div class="info-label">Nom</div>
+                    <div class="info-value">{{ reservation.spectatorLastName|upper }} {{ reservation.spectatorFirstName }}</div>
+                </div>
+
+                <div class="info-line">
+                    <div class="info-label">Type</div>
+                    <div class="info-value">{{ places[i] }}{% if reservation.isPMR %} — PMR{% endif %}</div>
+                </div>
+
+                <div class="place-block">
+                    <div class="place-label">Place</div>
+                    <div class="place-value">
+                        {% if seatAssignments[i] is defined %}
+                            {{ seatAssignments[i].seat.row }}{{ seatAssignments[i].seat.number }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="price-block">
+                    {% if places[i] == 'Adulte' %}
+                        {{ reservation.representation.adultPrice|number_format(2, ',', ' ') }} €
+                    {% elseif places[i] == 'Enfant' %}
+                        {{ reservation.representation.childPrice|number_format(2, ',', ' ') }} €
+                    {% elseif places[i] == 'Groupe' %}
+                        {{ (reservation.representation.groupPrice ?? reservation.representation.adultPrice)|number_format(2, ',', ' ') }} €
+                    {% else %}
+                        INVITATION
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="ticket-footer">
+                <span class="billet-num">Billet n° {{ reservation.id }}-{{ i + 1 }}</span> — Réservation n° {{ reservation.id }}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <script>
+        window.addEventListener('load', function () { window.print(); });
+    </script>
+</body>
+</html>
