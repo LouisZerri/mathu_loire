@@ -395,11 +395,14 @@ Tests bout-en-bout qui pilotent un vrai navigateur Chromium pour valider les par
 
 | Fichier | Couvre |
 |---|---|
-| `e2e/tests/public-booking.spec.js` | Réservation publique : choix séance → formulaire → récap → paiement HelloAsso (mocké) → confirmation. Inclut aussi le flow "paiement au guichet". |
+| `e2e/tests/public-booking.spec.js` | Réservation publique : choix séance → formulaire → récap → paiement HelloAsso (mocké) → confirmation. Inclut aussi le flow "paiement au guichet". Vérifie aussi qu'un email de confirmation est envoyé. |
 | `e2e/tests/admin-flow.spec.js` | Login admin → création résa au guichet → ouverture page d'impression des billets. |
+| `e2e/tests/self-cancel.spec.js` | Annulation par le spectateur via `/billetterie/suivi/{id}/{token}` + email d'annulation envoyé. |
 | `e2e/tests/security.spec.js` | Accès admin sans login redirigé, mot de passe incorrect rejeté, pages publiques accessibles. |
 
 **Mock HelloAsso** : `App\Service\HelloAsso\HelloAssoClientFake` court-circuite l'API HelloAsso en environnement `test_e2e` (la `redirectUrl` pointe directement sur `/retour/{id}`, le checkout est simulé Authorized). Aucun appel réseau au sandbox HelloAsso → tests rapides et isolés.
+
+**Mailbox de test** : `App\EventListener\E2eMailboxListener` intercepte tous les emails envoyés par Symfony Mailer en `test_e2e` et les écrit dans `var/e2e-mailbox.json`. Les tests Playwright lisent ce fichier via le helper `findEmailTo(email)` pour vérifier qu'un email a bien été envoyé après une action (confirmation de résa, annulation, etc.). Aucune dépendance à un service externe type Mailpit.
 
 **Base de données dédiée** : `mathuloire_e2e` (séparée de `mathuloire_test` utilisée par PHPUnit). Réinitialisée avant chaque suite de test via `php bin/console app:e2e:reset-db --env=test_e2e`.
 

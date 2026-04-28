@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { resetDatabase } = require('../helpers/db');
+const { resetDatabase, findEmailTo } = require('../helpers/db');
 
 test.describe('Parcours public de réservation', () => {
     test.beforeAll(() => {
@@ -41,6 +41,11 @@ test.describe('Parcours public de réservation', () => {
         // 7. Page de confirmation
         await expect(page).toHaveURL(/\/billetterie\/confirmation\/\d+\/[a-f0-9]+/);
         await expect(page.getByText(/confirm|merci|réservation/i).first()).toBeVisible();
+
+        // 8. Un email de confirmation a été envoyé au spectateur
+        const emails = findEmailTo('jean.dupont@example.test');
+        expect(emails.length).toBeGreaterThanOrEqual(1);
+        expect(emails[0].subject).toMatch(/confirmation|réservation/i);
     });
 
     test('Un spectateur réserve avec paiement au guichet', async ({ page }) => {
@@ -63,5 +68,8 @@ test.describe('Parcours public de réservation', () => {
         await page.getByRole('button', { name: /paiement au guichet/i }).click();
 
         await expect(page).toHaveURL(/\/billetterie\/confirmation\/\d+\/[a-f0-9]+/);
+
+        const emails = findEmailTo('sophie.martin@example.test');
+        expect(emails.length).toBeGreaterThanOrEqual(1);
     });
 });
