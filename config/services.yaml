@@ -18,6 +18,8 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        exclude:
+            - '../src/EventListener/E2eMailboxListener.php'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
@@ -25,3 +27,18 @@ services:
     App\Service\Admin\ShowService:
         arguments:
             $projectDir: '%kernel.project_dir%'
+
+    App\Command\ResetE2eDatabaseCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+when@test_e2e:
+    services:
+        App\Service\HelloAsso\HelloAssoClient:
+            class: App\Service\HelloAsso\HelloAssoClientFake
+
+        App\EventListener\E2eMailboxListener:
+            arguments:
+                $projectDir: '%kernel.project_dir%'
+            tags:
+                - { name: kernel.event_listener, event: Symfony\Component\Mailer\Event\MessageEvent, method: __invoke }
