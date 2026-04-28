@@ -25,3 +25,12 @@ services:
     App\Service\Admin\ShowService:
         arguments:
             $projectDir: '%kernel.project_dir%'
+
+    App\Command\ResetE2eDatabaseCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+when@test_e2e:
+    services:
+        App\Service\HelloAsso\HelloAssoClient:
+            class: App\Service\HelloAsso\HelloAssoClientFake

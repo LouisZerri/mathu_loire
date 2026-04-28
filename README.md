@@ -389,6 +389,33 @@ npx eslint assets/
 
 Philosophie : chaque test protège contre un risque réel (perte d'argent, sur-réservation, faille de sécurité, incohérence de données). Pas de tests décoratifs.
 
+### Tests E2E (Playwright)
+
+Tests bout-en-bout qui pilotent un vrai navigateur Chromium pour valider les parcours business critiques. Le code Symfony, le rendu Twig, JavaScript, sessions, redirections, formulaires sont tous exercés en conditions réelles.
+
+| Fichier | Couvre |
+|---|---|
+| `e2e/tests/public-booking.spec.js` | Réservation publique : choix séance → formulaire → récap → paiement HelloAsso (mocké) → confirmation. Inclut aussi le flow "paiement au guichet". |
+| `e2e/tests/admin-flow.spec.js` | Login admin → création résa au guichet → ouverture page d'impression des billets. |
+| `e2e/tests/security.spec.js` | Accès admin sans login redirigé, mot de passe incorrect rejeté, pages publiques accessibles. |
+
+**Mock HelloAsso** : `App\Service\HelloAsso\HelloAssoClientFake` court-circuite l'API HelloAsso en environnement `test_e2e` (la `redirectUrl` pointe directement sur `/retour/{id}`, le checkout est simulé Authorized). Aucun appel réseau au sandbox HelloAsso → tests rapides et isolés.
+
+**Base de données dédiée** : `mathuloire_e2e` (séparée de `mathuloire_test` utilisée par PHPUnit). Réinitialisée avant chaque suite de test via `php bin/console app:e2e:reset-db --env=test_e2e`.
+
+Lancement :
+
+```bash
+cd e2e
+npm install              # première fois
+npx playwright install chromium  # première fois
+npx playwright test      # lance toute la suite (~25s)
+npx playwright test public-booking  # une suite spécifique
+npx playwright test --ui # mode interactif avec replay
+```
+
+Playwright démarre automatiquement un serveur PHP intégré sur `127.0.0.1:8765` en `APP_ENV=test_e2e`. La config se trouve dans `e2e/playwright.config.js`.
+
 ### Analyse statique et linting
 
 L'analyse statique et le linting garantissent la qualité du code **avant** l'exécution. Ils détectent les bugs, les erreurs de typage, les failles de sécurité et les mauvaises pratiques sans avoir à lancer l'application. C'est un filet de sécurité indispensable pour éviter les régressions et maintenir un code propre sur le long terme.
