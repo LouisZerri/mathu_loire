@@ -87,6 +87,14 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
+      - name: E2E - prepare database and fixtures
+        env:
+          APP_ENV: test_e2e
+        run: |
+          php bin/console doctrine:database:create --env=test_e2e --if-not-exists
+          php bin/console doctrine:schema:create --env=test_e2e
+          php bin/console doctrine:fixtures:load --env=test_e2e --no-interaction
+
       - name: E2E - run Playwright tests
         working-directory: e2e
         env:
