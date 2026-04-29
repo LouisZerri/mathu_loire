@@ -1,0 +1,10 @@
+when@prod:
+    sentry:
+        dsn: '%env(default::SENTRY_DSN)%'
+        options:
+            environment: '%kernel.environment%'
+            send_default_pii: false
+            traces_sample_rate: 0
+            ignore_exceptions:
+                - Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+                - Symfony\Component\Security\Core\Exception\AccessDeniedException

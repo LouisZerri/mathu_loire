@@ -316,7 +316,28 @@ HELLOASSO_CLIENT_ID=<votre clientId>
 HELLOASSO_CLIENT_SECRET=<votre clientSecret>
 HELLOASSO_ORGANIZATION_SLUG=<votre slug d'asso>
 HELLOASSO_IS_SANDBOX=true
+
+# Sentry (production uniquement, laisser vide en dev)
+SENTRY_DSN=https://xxxx@oXXXX.ingest.sentry.io/YYYY
 ```
+
+### Sentry (monitoring d'erreurs en production)
+
+Sentry remonte automatiquement les exceptions non gérées en production. Le bundle est chargé uniquement en `prod` (voir `config/bundles.php`), donc aucun appel réseau en dev/test.
+
+**Setup** :
+1. Créer un projet sur [sentry.io](https://sentry.io) (free tier : 5 000 events/mois)
+2. Récupérer le DSN du projet (format `https://xxxx@oXXXX.ingest.sentry.io/YYYY`)
+3. Ajouter `SENTRY_DSN=...` dans `.env.local` du serveur de production
+4. Configurer une alerte email dans Sentry pour être notifié à chaque nouvelle erreur
+
+**Comportement** :
+- Les 404 et `AccessDeniedException` sont ignorées (bruit inutile)
+- Les exceptions 500 sont reportées avec stack trace + URL + utilisateur connecté + breadcrumbs
+- `traces_sample_rate=0` : pas de performance monitoring (économie du quota)
+- `send_default_pii: false` : pas d'envoi automatique de l'IP/email côté client (RGPD)
+
+DSN vide = Sentry désactivé silencieusement (idéal pour la CI et le dev).
 
 ### Webhook HelloAsso
 
