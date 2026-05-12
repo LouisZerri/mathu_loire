@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Reservation;
 use App\Service\Security\AuditLogger;
 use App\Service\HelloAsso\HelloAssoPaymentHandler;
+use App\Service\Pdf\TicketQrCodeGenerator;
 use App\Service\Reservation\ReservationMailer;
 use App\Service\Reservation\ReservationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -201,7 +202,7 @@ class ReservationActionController extends AbstractController
      * @return Response
      */
     #[Route('/{id}/print', name: 'app_admin_reservation_print', requirements: ['id' => '\d+'])]
-    public function print(Reservation $reservation): Response
+    public function print(Reservation $reservation, TicketQrCodeGenerator $qrGenerator): Response
     {
         $places = array_merge(
             array_fill(0, $reservation->getNbAdults(), 'Adulte'),
@@ -210,9 +211,15 @@ class ReservationActionController extends AbstractController
             array_fill(0, $reservation->getNbInvitations(), 'Invitation'),
         );
 
+        $qrCodes = [];
+        foreach ($places as $i => $_) {
+            $qrCodes[$i] = $qrGenerator->generateDataUri($reservation, $i + 1);
+        }
+
         return $this->render('admin/reservation/print_tickets.html.twig', [
             'reservation' => $reservation,
             'places' => $places,
+            'qrCodes' => $qrCodes,
         ]);
     }
 }

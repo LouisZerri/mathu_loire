@@ -100,6 +100,12 @@ class Reservation
     #[ORM\OneToMany(targetEntity: Payment::class, mappedBy: 'reservation', cascade: ['remove'], orphanRemoval: true)]
     private Collection $payments;
 
+    /**
+     * @var Collection<int, TicketScan>
+     */
+    #[ORM\OneToMany(targetEntity: TicketScan::class, mappedBy: 'reservation', cascade: ['remove'], orphanRemoval: true)]
+    private Collection $ticketScans;
+
     #[ORM\Column(nullable: true)]
     private ?int $checkoutIntentId = null;
 
@@ -113,6 +119,7 @@ class Reservation
     {
         $this->seatAssignments = new ArrayCollection();
         $this->payments = new ArrayCollection();
+        $this->ticketScans = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -418,5 +425,13 @@ class Reservation
         $this->reminderSentAt = $reminderSentAt;
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, TicketScan>
+     */
+    public function getTicketScans(): Collection
+    {
+        return $this->ticketScans;
     }
 }

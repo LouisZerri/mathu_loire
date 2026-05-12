@@ -5,7 +5,7 @@ namespace App\Service\Pdf;
 use App\Entity\Representation;
 use App\Repository\ReservationRepository;
 use App\Repository\SeatAssignmentRepository;
-use App\Repository\SeatRepository;
+use App\Repository\TicketScanRepository;
 use App\Service\Reservation\ReservationService;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -19,8 +19,8 @@ class SessionReportPdfGenerator
     public function __construct(
         private Environment $twig,
         private ReservationRepository $reservationRepository,
-        private SeatRepository $seatRepository,
         private SeatAssignmentRepository $seatAssignmentRepository,
+        private TicketScanRepository $ticketScanRepository,
         private ReservationService $reservationService,
     ) {
     }
@@ -38,7 +38,6 @@ class SessionReportPdfGenerator
             ['spectatorLastName' => 'ASC']
         );
 
-        $seats = $this->seatRepository->findAll();
         $assignments = $this->seatAssignmentRepository->findByRepresentationWithReservation($representation);
 
         $assignmentMap = [];
@@ -62,6 +61,8 @@ class SessionReportPdfGenerator
         }
 
         $totalSpectators = $totalAdults + $totalChildren + $totalInvitations;
+        $scannedCounts = $this->ticketScanRepository->countScannedByReservationForRepresentation($representation);
+        $totalScanned = array_sum($scannedCounts);
 
         $cancelledReservations = $this->reservationRepository->findBy(
             ['representation' => $representation, 'status' => 'cancelled'],
@@ -90,6 +91,8 @@ class SessionReportPdfGenerator
             'totalRevenue' => $totalRevenue,
             'totalRefunded' => $totalRefunded,
             'totalReservations' => count($reservations),
+            'scannedCounts' => $scannedCounts,
+            'totalScanned' => $totalScanned,
         ]);
 
         $options = new Options();
