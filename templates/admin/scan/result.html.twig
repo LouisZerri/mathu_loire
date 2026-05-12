@@ -1,0 +1,49 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Contrôle billet - Les Mathu'Loire{% endblock %}
+
+{% block body %}
+{% set colors = {
+    valid: { bg: '#16a34a', light: '#dcfce7', icon: '✓' },
+    already: { bg: '#dc2626', light: '#fee2e2', icon: '✗' },
+    cancelled: { bg: '#dc2626', light: '#fee2e2', icon: '✗' },
+    invalid: { bg: '#dc2626', light: '#fee2e2', icon: '✗' }
+} %}
+{% set c = colors[state] %}
+
+<div class="rounded-2xl text-center px-6 py-10" style="background: {{ c.light }}; border: 2px solid {{ c.bg }};">
+    <div class="mx-auto flex items-center justify-center rounded-full mb-6" style="width: 100px; height: 100px; background: {{ c.bg }}; color: white; font-size: 56px; font-weight: 700;">
+        {{ c.icon }}
+    </div>
+
+    <h1 class="text-3xl font-bold mb-3" style="color: {{ c.bg }};">
+        {% if state == 'valid' %}Entrée autorisée
+        {% elseif state == 'already' %}Déjà contrôlé
+        {% elseif state == 'cancelled' %}Réservation annulée
+        {% else %}Code invalide
+        {% endif %}
+    </h1>
+
+    <p class="text-base text-gray-700 mb-6">{{ message }}</p>
+
+    {% if reservation %}
+    <div class="bg-white rounded-lg p-5 text-left max-w-md mx-auto">
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Spectacle</div>
+        <div class="text-lg font-semibold text-gray-900 mb-3">{{ reservation.representation.show.title }}</div>
+
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Date</div>
+        <div class="text-sm text-gray-900 mb-3">{{ reservation.representation.datetime|format_datetime(pattern='EEEE d MMMM yyyy à HH:mm', locale='fr', timezone='Europe/Paris')|capitalize }}</div>
+
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Spectateur</div>
+        <div class="text-sm text-gray-900 mb-3">{{ reservation.spectatorLastName|upper }} {{ reservation.spectatorFirstName }}</div>
+
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Billet</div>
+        <div class="text-sm text-gray-900">N° {{ reservation.id }}-{{ ticketIndex }}</div>
+    </div>
+    {% endif %}
+
+    <a href="{{ path('app_admin_dashboard') }}" class="inline-block mt-8 px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+        Retour au tableau de bord
+    </a>
+</div>
+{% endblock %}

@@ -224,6 +224,7 @@
                 <th class="text-center">PMR</th>
                 <th>Places</th>
                 <th>Paiement</th>
+                <th class="text-center">Scannés</th>
                 <th class="text-right">Total</th>
             </tr>
         </thead>
@@ -263,6 +264,9 @@
                     {{ resAssignments|join(', ')|default('—') }}
                 </td>
                 <td>{{ paymentLabel }}</td>
+                {% set ticketsTotal = res.nbAdults + res.nbChildren + res.nbInvitations + res.nbGroups %}
+                {% set scanned = scannedCounts[res.id] ?? 0 %}
+                <td class="text-center {{ scanned == ticketsTotal and ticketsTotal > 0 ? 'font-bold' : '' }}">{{ scanned }}/{{ ticketsTotal }}</td>
                 <td class="text-right font-bold">{{ resTotal|number_format(2, ',', ' ') }} €</td>
             </tr>
             {% endfor %}
@@ -277,6 +281,7 @@
                 <td></td>
                 <td></td>
                 <td></td>
+                <td class="text-center font-bold" style="padding-top: 3mm;">{{ totalScanned }}/{{ totalAdults + totalChildren + totalInvitations + totalGroups }}</td>
                 <td class="text-right font-bold" style="padding-top: 3mm;">{{ totalRevenue|number_format(2, ',', ' ') }} €</td>
             </tr>
         </tfoot>

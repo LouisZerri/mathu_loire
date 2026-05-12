@@ -95,6 +95,10 @@
 
         .price-block { text-align: center; font-size: 14px; font-weight: 700; color: #1f2937; padding: 2mm 0; }
 
+        .qr-block { text-align: center; padding: 2mm 0; }
+        .qr-block img { width: 25mm; height: 25mm; }
+        .qr-block .qr-label { font-size: 6px; color: #8b4572; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1mm; }
+
         .ticket-footer {
             background: #8b4572;
             color: #fff;
@@ -189,6 +193,13 @@
                         INVITATION
                     {% endif %}
                 </div>
+
+                {% if qrCodes[i] is defined %}
+                <div class="qr-block">
+                    <img src="{{ qrCodes[i] }}" alt="QR code billet {{ reservation.id }}-{{ i + 1 }}">
+                    <div class="qr-label">Contrôle à l'entrée</div>
+                </div>
+                {% endif %}
             </div>
 
             <div class="ticket-footer">
