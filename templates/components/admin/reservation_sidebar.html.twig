@@ -142,12 +142,14 @@
             Placer dans le plan de salle
         </a>
 
+        {% if reservation.spectatorEmail %}
         <form method="post" action="{{ path('app_admin_reservation_resend_email', { id: reservation.id }) }}">
             <input type="hidden" name="_token" value="{{ csrf_token('resend_email_' ~ reservation.id) }}">
             <button type="submit" class="w-full px-4 py-2 border border-gray-300 text-sm rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                 Renvoyer l'email de confirmation
             </button>
         </form>
+        {% endif %}
 
         <a href="{{ path('app_admin_reservation_print', { id: reservation.id }) }}" target="_blank"
            class="block w-full px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors text-center">

@@ -30,6 +30,10 @@ class ReservationMailer
      */
     public function sendConfirmation(Reservation $reservation): void
     {
+        if (!$reservation->getSpectatorEmail()) {
+            return;
+        }
+
         $representation = $reservation->getRepresentation();
         $total = $this->reservationService->computeTotal($reservation);
 
@@ -55,6 +59,10 @@ class ReservationMailer
      */
     public function sendReminder(Reservation $reservation): void
     {
+        if (!$reservation->getSpectatorEmail()) {
+            return;
+        }
+
         $html = $this->twig->render('email/reservation_reminder.html.twig', [
             'reservation' => $reservation,
         ]);
@@ -76,6 +84,10 @@ class ReservationMailer
      */
     public function sendCancellation(Reservation $reservation): void
     {
+        if (!$reservation->getSpectatorEmail()) {
+            return;
+        }
+
         $representation = $reservation->getRepresentation();
         $total = $this->reservationService->computeTotal($reservation);
 

@@ -82,12 +82,18 @@ class AdminReservationType extends AbstractType
             ])
             ->add('spectatorCity', TextType::class, [
                 'label' => 'Ville',
+                'required' => false,
+                'empty_data' => '',
             ])
             ->add('spectatorPhone', TelType::class, [
                 'label' => 'Téléphone',
+                'required' => false,
+                'empty_data' => '',
             ])
             ->add('spectatorEmail', EmailType::class, [
                 'label' => 'Email',
+                'required' => false,
+                'empty_data' => '',
             ])
             ->add('spectatorComment', TextareaType::class, [
                 'label' => 'Commentaire spectateur',

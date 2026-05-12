@@ -56,16 +56,16 @@ class Reservation
     private ?string $spectatorFirstName = null;
 
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'La ville est obligatoire.')]
+    #[Assert\NotBlank(message: 'La ville est obligatoire.', groups: ['public'])]
     private ?string $spectatorCity = null;
 
     #[ORM\Column(length: 20)]
-    #[Assert\NotBlank(message: 'Le téléphone est obligatoire.')]
+    #[Assert\NotBlank(message: 'Le téléphone est obligatoire.', groups: ['public'])]
     #[Assert\Regex(pattern: '/^(?:(?:\+33|0)\s?[1-9])(?:[\s.\-]?\d{2}){4}$/', message: 'Numéro de téléphone invalide (ex: 06 12 34 56 78).')]
     private ?string $spectatorPhone = null;
 
     #[ORM\Column(length: 180)]
-    #[Assert\NotBlank(message: 'L\'email est obligatoire.')]
+    #[Assert\NotBlank(message: 'L\'email est obligatoire.', groups: ['public'])]
     #[Assert\Email(mode: 'strict', message: 'L\'adresse email n\'est pas valide.')]
     private ?string $spectatorEmail = null;
 
